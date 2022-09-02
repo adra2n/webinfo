@@ -34,7 +34,7 @@ optional arguments:
 
 TODO:
 
-[ ] 将写入excel写成统一调用
+[X] 将写入excel写成统一调用
 
 [ ] 集成nuclei进行漏洞扫描
 
