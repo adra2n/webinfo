@@ -32,13 +32,13 @@ def get_args():
                         help="提取ip地址，默认为false")
     parser.add_argument('-ms',
                         action='store_true',
-                        help="进行masscan端口扫描，获取端口服务信息，默认为false")
+                        help="进行masscan端口扫描，获取端口开放情况，默认为false")
     parser.add_argument('-ns',
                         action='store_true',
                         help="进行nmap端口扫描，获取端口服务信息，默认为false")
     parser.add_argument('-poc',
                         action='store_true',
-                        help="进行poc扫描，获取端口服务信息，默认为false")
+                        help="进行poc扫描，对端口服务进行漏洞扫描，默认为false")
     parser.add_argument('--test',
                         action='store_true',
                         help="测试，默认为false")
