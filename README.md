@@ -1,5 +1,7 @@
 # webinfo
 
+> 现在命令提醒还不完善，需要先执行-dm，在执行其他的，-ms、-ns需要先执行-ip，-poc需要先执行-ns
+
 一款自动化收集信息的工具，已经完成以下功能：
 ```
 usage: main.py [-h] -d DOMAIN [-dm] [-dr] [-ip] [-ms] [-ns] [-poc] [--test]
@@ -31,8 +33,6 @@ optional arguments:
 其他都不重要
 
 结构现在还比较乱，不过可以正常运行了，只要一个domain输入，其他就不用管了，看excel即可
-
-> 现在命令提醒还不完善，需要先执行-dm，在执行其他的，-ms、-ns需要先执行-ip，-poc需要先执行-ns
 
 TODO:
 
