@@ -32,9 +32,13 @@ optional arguments:
 
 结构现在还比较乱，不过可以正常运行了，只要一个domain输入，其他就不用管了，看excel即可
 
+> 现在命令提醒还不完善，需要先执行-dm，在执行其他的，-ms、-ns需要先执行-ip，-poc需要先执行-ns
+
 TODO:
 
 [X] 将写入excel写成统一调用
+
+[ ] 优化命令行提醒
 
 [ ] 集成nuclei进行漏洞扫描
 
