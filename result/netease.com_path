@@ -1,7 +1,7 @@
 {
     "info": {
         "args": "/Users/gaohe/Desktop/Projects/python/webinfo/modules/burte/dirsearch/dirsearch.py -x 301,302,403,404,405,500,501,502,503 --exclude-texts Not found, Error --min-response-size 500 --exclude-response 404.html -l /Users/gaohe/Desktop/Projects/python/webinfo/result/netease.com_host -w /Users/gaohe/Desktop/Projects/python/webinfo/dicts/path -o /Users/gaohe/Desktop/Projects/python/webinfo/result/netease.com_path --format json -t 50",
-        "time": "Fri Sep  2 16:56:55 2022"
+        "time": "Fri Sep  2 17:30:26 2022"
     },
     "results": [
         {
@@ -45,6 +45,13 @@
             "redirect": "",
             "status": 200,
             "url": "https://bjk.netease.com/admin-console"
+        },
+        {
+            "content-length": 867,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 200,
+            "url": "https://jifen.netease.com/app/kibana"
         }
     ]
 }

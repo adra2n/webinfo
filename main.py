@@ -6,15 +6,12 @@ from modules.burte.get_domains import domain_burte
 from modules.burte.get_ip import getIP
 from modules.burte.get_path import path_burte
 from utils.print_color import print_color
-from modules.burte.amass_xls import amass_xls
-from modules.burte.path_xls import path_xls
 import xlwt as ExcelWrite
 import xlrd
 from xlutils.copy import copy
 from modules.scan.scan import do_masscan,do_nmap
-from modules.scan.nmap_xls import nmap_xls
 from modules.hack.poc_attack import do_attack
-from modules.hack.poc_xls import poc_xls
+from utils.data2xsl import data2xls
 
 def get_args():
     parser = ArgumentParser()
@@ -64,9 +61,10 @@ def main():
         print_color("开始写域名文件", 'i')
         sheet_name = "域名信息"
         name_list = ['name', 'domain', 'ip', 'cidr', 'asn', 'desc', 'tag', 'source']
-        count = amass_xls(xls,domain_out, csv_out, sheet_name, name_list)
+        count = data2xls(xls,domain_out, csv_out, sheet_name, name_list)
         print_color('写入 ' + str(count) + ' 行', 'i')
         print_color('域名写入完成', 'g')
+
     if args.dr:
         csv_out = os.path.join(result_dir, f"{args.domain}.xls")
         try:
@@ -81,18 +79,21 @@ def main():
             sheet_name = "路径信息"
             name_list = ['url', 'status','length','title','redirect']
             newb = copy(workbook)
-            path_xls(newb,path_out, csv_out, sheet_name, name_list)
+            data2xls(newb,path_out, csv_out, sheet_name, name_list)
             print_color("路径写入成功", 'g')
         except:
             traceback.print_exc()
             print_color("请先运行dm获取域名",'e')
+
     if args.ip:
         # w无需写如excel中
         getIP(args.domain)
+
     if args.ms:
         # 需要先执行ip
         do_masscan(args.domain)
         pass
+
     if args.ns:
         csv_out = os.path.join(result_dir, f"{args.domain}.xls")
         #需要先执行完ms
@@ -106,19 +107,23 @@ def main():
         sheet_name = "端口信息"
         name_list = ['host', 'port', 'service', 'product','title']
         newb = copy(workbook)
-        nmap_xls(newb,nmap_out, csv_out, sheet_name, name_list)
-        print_color("nmap文件写入成功", 'g')
+        try:
+            data2xls(newb,nmap_out, csv_out, sheet_name, name_list)
+            print_color("nmap文件写入成功", 'g')
+        except:
+            print_color("已存在表名称，请手工删除",'e')
+
     if args.poc:
         csv_out = os.path.join(result_dir, f"{args.domain}.xls")
         # 需要先执行完ms
-        workbook = xlrd.open_workbook(csv_out)
+        # workbook = xlrd.open_workbook(csv_out)
         poc_out = do_attack(args.domain)
         workbook = xlrd.open_workbook(csv_out)
         print_color("开始写hack文件", 'i')
         sheet_name = "漏洞信息"
         name_list = ['host', 'port', 'service', 'level', 'vul']
         newb = copy(workbook)
-        poc_xls(newb, poc_out, csv_out, sheet_name, name_list)
+        data2xls(newb, poc_out, csv_out, sheet_name, name_list)
         print_color("漏洞文件写入成功", 'g')
 
 
