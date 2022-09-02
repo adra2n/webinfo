@@ -1,0 +1,50 @@
+{
+    "info": {
+        "args": "/Users/gaohe/Desktop/Projects/python/webinfo/modules/burte/dirsearch/dirsearch.py -x 301,302,403,404,405,500,501,502,503 --exclude-texts Not found, Error --min-response-size 500 --exclude-response 404.html -l /Users/gaohe/Desktop/Projects/python/webinfo/result/netease.com_host -w /Users/gaohe/Desktop/Projects/python/webinfo/dicts/path -o /Users/gaohe/Desktop/Projects/python/webinfo/result/netease.com_path --format json -t 50",
+        "time": "Fri Sep  2 16:56:55 2022"
+    },
+    "results": [
+        {
+            "content-length": 3500,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 200,
+            "url": "https://demo-ep.netease.com/v2/_catalog"
+        },
+        {
+            "content-length": 3500,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 200,
+            "url": "https://demo-ep.netease.com/v2/keys"
+        },
+        {
+            "content-length": 554,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 410,
+            "url": "https://yqm163-yd.netease.com/.svn/entries"
+        },
+        {
+            "content-length": 867,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 200,
+            "url": "https://testjifen.netease.com/app/kibana"
+        },
+        {
+            "content-length": 40651,
+            "content-type": "application/octet-stream",
+            "redirect": "",
+            "status": 200,
+            "url": "https://heroes.nos.netease.com/test"
+        },
+        {
+            "content-length": 2930,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 200,
+            "url": "https://bjk.netease.com/admin-console"
+        }
+    ]
+}

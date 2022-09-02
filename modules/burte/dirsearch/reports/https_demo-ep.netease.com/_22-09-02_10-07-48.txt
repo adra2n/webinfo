@@ -1,0 +1,7 @@
+# Dirsearch started Fri Sep  2 10:07:49 2022 as: dirsearch.py -u https://demo-ep.netease.com -w ../../dicts/path
+
+403   564B   https://demo-ep.netease.com/.svn/entries
+403   564B   https://demo-ep.netease.com/.git/config
+200     3KB  https://demo-ep.netease.com/v2/_catalog
+200     3KB  https://demo-ep.netease.com/v2/keys
+404   119B   https://demo-ep.netease.com/api
