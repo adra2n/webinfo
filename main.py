@@ -12,6 +12,8 @@ from xlutils.copy import copy
 from modules.scan.scan import do_masscan,do_nmap
 from modules.hack.poc_attack import do_attack
 from utils.data2xsl import data2xls
+from utils.path_xls import path_xls
+from utils.amass_xls import amass_xls
 
 def get_args():
     parser = ArgumentParser()
@@ -61,7 +63,7 @@ def main():
         print_color("开始写域名文件", 'i')
         sheet_name = "域名信息"
         name_list = ['name', 'domain', 'ip', 'cidr', 'asn', 'desc', 'tag', 'source']
-        count = data2xls(xls,domain_out, csv_out, sheet_name, name_list)
+        count = amass_xls(xls,domain_out, csv_out, sheet_name, name_list)
         print_color('写入 ' + str(count) + ' 行', 'i')
         print_color('域名写入完成', 'g')
 
@@ -79,7 +81,7 @@ def main():
             sheet_name = "路径信息"
             name_list = ['url', 'status','length','title','redirect']
             newb = copy(workbook)
-            data2xls(newb,path_out, csv_out, sheet_name, name_list)
+            path_xls(newb,path_out, csv_out, sheet_name, name_list)
             print_color("路径写入成功", 'g')
         except:
             traceback.print_exc()
