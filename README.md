@@ -10,12 +10,12 @@ optional arguments:
   -h, --help            show this help message and exit
   -d DOMAIN, --domain DOMAIN
                         需要扫描的域名地址
-  -dm                   是否直接进行域名扫描，默认为false
-  -dr                   是否直接进行路径扫描，默认为false
-  -ip                   提取ip地址，默认为false
-  -ms                   进行masscan端口扫描，获取端口开放情况，默认为false
-  -ns                   进行nmap端口扫描，获取端口服务信息，默认为false
-  -poc                  进行poc扫描，对端口服务进行漏洞扫描，默认为false
+  -dm                   直接进行域名扫描
+  -dr                   进行路径扫描
+  -ip                   提取ip地址
+  -ms                   进行masscan端口扫描，获取端口开放情况
+  -ns                   进行nmap端口扫描，获取端口服务信息
+  -poc                  进行poc扫描，对端口服务进行漏洞扫描
   --test                测试，默认为false
 ```
 
