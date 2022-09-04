@@ -1,7 +1,7 @@
 {
     "info": {
         "args": "/Users/gaohe/Desktop/Projects/python/webinfo/modules/burte/dirsearch/dirsearch.py -x 301,302,403,404,405,500,501,502,503 --exclude-texts Not found, Error --min-response-size 500 --exclude-response 404.html -l /Users/gaohe/Desktop/Projects/python/webinfo/result/netease.com_host -w /Users/gaohe/Desktop/Projects/python/webinfo/dicts/path -o /Users/gaohe/Desktop/Projects/python/webinfo/result/netease.com_path --format json -t 50",
-        "time": "Fri Sep  2 17:30:26 2022"
+        "time": "Sat Sep  3 03:57:55 2022"
     },
     "results": [
         {
@@ -52,6 +52,48 @@
             "redirect": "",
             "status": 200,
             "url": "https://jifen.netease.com/app/kibana"
+        },
+        {
+            "content-length": 554,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 410,
+            "url": "https://yqm163-lt.netease.com/.svn/entries"
+        },
+        {
+            "content-length": 867,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 200,
+            "url": "https://releasejifen.netease.com/app/kibana"
+        },
+        {
+            "content-length": 1188,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 200,
+            "url": "https://audit.ws.netease.com/actuator/health"
+        },
+        {
+            "content-length": 554,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 410,
+            "url": "https://m163-dx.netease.com/.svn/entries"
+        },
+        {
+            "content-length": 554,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 410,
+            "url": "https://yqm163-dx.netease.com/.svn/entries"
+        },
+        {
+            "content-length": 2269,
+            "content-type": "text/html",
+            "redirect": "",
+            "status": 200,
+            "url": "https://adcm.netease.com/auth/login"
         }
     ]
 }

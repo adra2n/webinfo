@@ -22,22 +22,22 @@ def get_args():
                         required=True)
     parser.add_argument('-dm',
                         action='store_true',
-                        help="是否直接进行域名扫描，默认为false")
+                        help="直接进行域名扫描")
     parser.add_argument('-dr',
                         action='store_true',
-                        help="是否直接进行路径扫描，默认为false")
+                        help="进行路径扫描")
     parser.add_argument('-ip',
                         action='store_true',
-                        help="提取ip地址，默认为false")
+                        help="提取ip地址")
     parser.add_argument('-ms',
                         action='store_true',
-                        help="进行masscan端口扫描，获取端口开放情况，默认为false")
+                        help="进行masscan端口扫描，获取端口开放情况")
     parser.add_argument('-ns',
                         action='store_true',
-                        help="进行nmap端口扫描，获取端口服务信息，默认为false")
+                        help="进行nmap端口扫描，获取端口服务信息")
     parser.add_argument('-poc',
                         action='store_true',
-                        help="进行poc扫描，对端口服务进行漏洞扫描，默认为false")
+                        help="进行poc扫描，对端口服务进行漏洞扫描")
     parser.add_argument('--test',
                         action='store_true',
                         help="测试，默认为false")
@@ -70,6 +70,12 @@ def main():
     if args.dr:
         csv_out = os.path.join(result_dir, f"{args.domain}.xls")
         try:
+            domain_out = os.path.join(result_dir, f"{args.domain}.json")
+            open(domain_out)
+        except:
+            print_color("请先运行dm收集域名信息",'e')
+            return 0
+        try:
             workbook = xlrd.open_workbook(csv_out)
             print_color("开始进行路径爆破", "i")
             if args.test:
@@ -88,15 +94,37 @@ def main():
             print_color("请先运行dm获取域名",'e')
 
     if args.ip:
-        # w无需写如excel中
+        try:
+            domain_out = os.path.join(result_dir, f"{args.domain}.json")
+            open(domain_out)
+        except:
+            print_color("请先运行dm收集域名信息",'e')
+            return 0
         getIP(args.domain)
 
     if args.ms:
-        # 需要先执行ip
+        try:
+            domain_out = os.path.join(result_dir, f"{args.domain}.json")
+            open(domain_out)
+        except:
+            print_color("请先运行dm收集域名信息", 'e')
+            return 0
         do_masscan(args.domain)
         pass
 
     if args.ns:
+        try:
+            domain_out = os.path.join(result_dir, f"{args.domain}.json")
+            open(domain_out)
+        except:
+            print_color("请先运行dm收集域名信息", 'e')
+            return 0
+        try:
+            mass_out = os.path.join(result_dir, f"{args.domain}.masscan")
+            open(mass_out)
+        except:
+            print_color("请先运行masscan扫描获取开放的端口", 'e')
+            return 0
         csv_out = os.path.join(result_dir, f"{args.domain}.xls")
         #需要先执行完ms
         if args.test:
@@ -116,6 +144,25 @@ def main():
             print_color("已存在表名称，请手工删除",'e')
 
     if args.poc:
+        try:
+            domain_out = os.path.join(result_dir, f"{args.domain}.json")
+            open(domain_out)
+        except:
+            print_color("请先运行dm收集域名信息", 'e')
+            return 0
+        try:
+            mass_out = os.path.join(result_dir, f"{args.domain}.masscan")
+            open(mass_out)
+        except:
+            print_color("请先运行masscan扫描获取开放的端口", 'e')
+            return 0
+        try:
+            nmap_out = os.path.join(result_dir, f"{args.domain}.nmap")
+            open(nmap_out)
+        except:
+            print_color("请先运行nmap扫描获取开放的端口", 'e')
+            return 0
+
         csv_out = os.path.join(result_dir, f"{args.domain}.xls")
         # 需要先执行完ms
         # workbook = xlrd.open_workbook(csv_out)
