@@ -11,18 +11,19 @@ def path_xls(xls,path_in, csv_out,sheet_name,name_list):
     with open(path_in, 'r') as fh:
         row_data=json.load(fh)
     # print(row_data['results'])
-    for i,row in enumerate(row_data['results']):
+    # for i,row in enumerate(row_data['results']):
+    for i, row in enumerate(row_data):
         url = row['url']
         status = row['status']
         content_length = row['content-length']
-        title=gettitle(url)
-        redirect = row['redirect']
+        title=row['title']
+        # redirect = row['redirect']
         try:
             sheet.write(i+1, 0, url)
             sheet.write(i+1, 1, status)
             sheet.write(i+1, 2, content_length)
             sheet.write(i+1, 3, title)
-            sheet.write(i+1, 4, redirect)
+            # sheet.write(i+1, 4, redirect)
         except:
             pass
 

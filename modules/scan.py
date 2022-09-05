@@ -1,6 +1,5 @@
 import traceback
 
-from config import dirscan
 import os
 from config import result_dir,ports
 import threading

@@ -1,18 +1,22 @@
 import os.path
 from argparse import ArgumentParser
-from config import result_dir
-from modules.burte.get_domains import domain_burte
-from modules.burte.get_ip import getIP
-from modules.burte.get_path import path_burte,path_ips_burte
-from utils.print_color import print_color
 import xlwt as ExcelWrite
 import xlrd
 from xlutils.copy import copy
-from modules.scan.scan import do_masscan,do_nmap
-from modules.hack.poc_attack import do_attack
-from utils.data2xsl import data2xls
-from utils.path_xls import path_xls
-from utils.amass_xls import amass_xls
+
+from config import result_dir
+
+from modules.burte import domain_burte
+from modules.burte import getIP
+from modules.burte import path_burte,path_ips_burte
+from modules.scan import do_masscan,do_nmap
+from modules.attack import do_attack
+
+from utils.print_color import print_color
+
+from libs.data2xsl import data2xls
+from libs.path_xls import path_xls
+from libs.amass_xls import amass_xls
 
 def get_args():
     parser = ArgumentParser()
@@ -67,7 +71,7 @@ def main():
         name_list = ['name', 'domain', 'ip', 'cidr', 'asn', 'desc', 'tag', 'source']
         try:
             count = amass_xls(xls,domain_out, csv_out, sheet_name, name_list)
-            print_color('写入 ' + str(count) + ' 行', 'i')
+            # print_color('写入 ' + str(count) + ' 行', 'i')
             print_color('域名写入完成', 'g')
         except Exception as e:
             print_color(f"出现错误，错误信息{e},请检查", 'e')
@@ -92,7 +96,7 @@ def main():
         print_color("扫描结束", 'g')
         print_color("开始写路径文件", 'i')
         sheet_name = "Domain路径信息"
-        name_list = ['url', 'status','length','title','redirect']
+        name_list = ['url', 'status','length','title']
         newb = copy(workbook)
         try:
             path_xls(newb,path_out, csv_out, sheet_name, name_list)

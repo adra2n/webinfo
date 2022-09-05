@@ -2,18 +2,17 @@ import os
 import platform
 
 currentdir = os.path.abspath(os.path.dirname(__file__))
-# print(currentdir)
 
 if platform.system() == "Darwin":
     amass_bin = os.path.abspath(os.path.join(currentdir, "bin/amass_mac"))
 elif platform.system() == "Linux":
     amass_bin = os.path.abspath(os.path.join(currentdir, "bin/amass_linux"))
 
-dirscan = os.path.abspath(os.path.join(currentdir, 'modules/burte/dirsearch/dirsearch.py'))
-path_dict = os.path.abspath(os.path.join(currentdir, 'dicts/small_path'))
-# path_dict = os.path.abspath(os.path.join(currentdir, 'dicts/big_path'))
+# dirscan = os.path.abspath(os.path.join(currentdir, 'bak/burte/dirsearch/dirsearch.py'))
+# path_dict = os.path.abspath(os.path.join(currentdir, 'db/small_path'))
+path_dict = os.path.abspath(os.path.join(currentdir, 'db/big_path'))
 result_dir = os.path.join(currentdir, "result")
-poc_dir = os.path.abspath(os.path.join(currentdir, 'modules/hack/pocs'))
+poc_dir = os.path.abspath(os.path.join(currentdir, 'db/pocs'))
 
 ip_count=5
 threadNum=50
