@@ -93,7 +93,7 @@ def escape_csv(text):
 # (https://website.com/folder/foo -> https://website.com/folder/bar)
 def merge_path(url, path):
     parts = url.split("/")
-    # Normalize path like the browser does (dealing with ../ and ./)
+    # Normalize small_path like the browser does (dealing with ../ and ./)
     path = urljoin("/", path).lstrip("/")
     parts[-1] = path
 

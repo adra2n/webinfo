@@ -22,7 +22,7 @@ setuptools.setup(
     version=VERSION,
     author="Mauro Soria",
     author_email="maurosoria@protonmail.com",
-    description="Advanced web path scanner",
+    description="Advanced web small_path scanner",
     long_description=desc,
     long_description_content_type="text/markdown",
     url="https://github.com/maurosoria/dirsearch",

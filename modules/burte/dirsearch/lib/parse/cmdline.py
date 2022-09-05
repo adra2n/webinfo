@@ -68,7 +68,7 @@ def parse_arguments():
         action="store",
         dest="config",
         metavar="PATH",
-        help="Full path to config file, see 'config.ini' for example (Default: config.ini)",
+        help="Full small_path to config file, see 'config.ini' for example (Default: config.ini)",
         default=FileUtils.build_path(SCRIPT_PATH, "config.ini"),
     )
 
@@ -177,7 +177,7 @@ def parse_arguments():
         "--force-recursive",
         action="store_true",
         dest="force_recursive",
-        help="Do recursive brute-force for every found path, not only directories",
+        help="Do recursive brute-force for every found small_path, not only directories",
     )
     general.add_option(
         "-R",
@@ -258,7 +258,7 @@ def parse_arguments():
         action="store",
         dest="exclude_response",
         metavar="PATH",
-        help="Exclude responses similar to response of this page, path as input (e.g. 404.html)",
+        help="Exclude responses similar to response of this page, small_path as input (e.g. 404.html)",
     )
     general.add_option(
         "--skip-on-status",

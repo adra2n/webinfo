@@ -137,7 +137,7 @@ class Requester:
     def set_agent(self, value):
         self.agents.append(value)
 
-    # :path: is expected not to start with "/"
+    # :small_path: is expected not to start with "/"
     def request(self, path, proxy=None):
         # Pause if the request rate exceeded the maximum
         while self.is_rate_exceeded():
@@ -161,7 +161,7 @@ class Requester:
 
                 self.set_header("user-agent", random.choice(self.agents))
 
-                # Use prepared request to avoid the URL path from being normalized
+                # Use prepared request to avoid the URL small_path from being normalized
                 # Reference: https://github.com/psf/requests/issues/5289
                 request = requests.Request(
                     options["http_method"],

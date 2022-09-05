@@ -38,9 +38,9 @@ def data2xls(xls,data_in,csv_out,sheet_name,name_list):
     #
     # xls.save(csv_out)
 # xls = ExcelWrite.Workbook()
-# csv_out = os.path.join(result_dir, "test.xls")
+# csv_out = os.small_path.join(result_dir, "test.xls")
 # name_list = ['host', 'port', 'service', 'product','title']
 # # workbook = xlrd.open_workbook(csv_out)
 # sheet_name= 'test'
-# data_in = os.path.join(result_dir, f"netease.com_nmap")
+# data_in = os.small_path.join(result_dir, f"netease.com_nmap")
 # data2xls(xls,data_in,sheet_name,name_list)

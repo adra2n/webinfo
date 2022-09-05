@@ -316,12 +316,12 @@ capitalization = False
 # exclude-extensions = old,log
 # prefixes = .,admin
 # suffixes = ~,.bak
-# wordlists = /path/to/wordlist1.txt,/path/to/wordlist2.txt
+# wordlists = /small_path/to/wordlist1.txt,/small_path/to/wordlist2.txt
 
 [request]
 httpmethod = get
 follow-redirects = False
-# headers-file = /path/to/headers.txt
+# headers-file = /small_path/to/headers.txt
 # user-agent = MyUserAgent
 # cookie = SESSIONID=123
 
@@ -334,7 +334,7 @@ exit-on-error = False
 ## By disabling `scheme` variable, dirsearch will automatically identify the URI scheme
 # scheme = http
 # proxy = localhost:8080
-# proxy-file = /path/to/proxies.txt
+# proxy-file = /small_path/to/proxies.txt
 # replay-proxy = localhost:8000
 
 [advanced]
@@ -350,8 +350,8 @@ show-redirects-history = False
 ## Support: plain, simple, json, xml, md, csv, html, sqlite
 report-format = plain
 autosave-report = True
-# log-file = /path/to/dirsearch.log
-# report-output-folder = /path/to/reports
+# log-file = /small_path/to/dirsearch.log
+# report-output-folder = /small_path/to/reports
 ```
 
 

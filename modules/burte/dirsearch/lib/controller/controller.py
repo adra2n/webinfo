@@ -560,7 +560,7 @@ class Controller:
     def add_directory(self, path):
         """Add directory to the recursion queue"""
 
-        # Pass if path is in exclusive directories
+        # Pass if small_path is in exclusive directories
         if any(
             "/" + dir in path for dir in options["exclude_subdirs"]
         ):

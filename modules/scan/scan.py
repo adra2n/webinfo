@@ -2,7 +2,7 @@ import traceback
 
 from config import dirscan
 import os
-from config import result_dir
+from config import result_dir,ports
 import threading
 import queue
 from multiprocessing.dummy import Pool as threadpool
@@ -20,7 +20,6 @@ import json
 def do_masscan(domain):
     mass_out = os.path.join(result_dir, f"{domain}_masscan")
     ips_in = os.path.join(result_dir, f"{domain}_ips")
-    ports = '80,8080,8000,8888,8880,8088,2379,873,3306,1433,7001,9043,50000,6379,2375,9200,5900'
     masscan_start_command = f'masscan --ports {ports} --rate=1000 -iL {ips_in} -oJ {mass_out} --append-output'
     p3 = subprocess.Popen([masscan_start_command], shell=True)
     p3.wait()
@@ -99,7 +98,7 @@ def do_nmap(domain):
         p.apply_async(nmap_doscan, args=(item,nmap_out,))
     p.close()
     p.join()
-    return nmap_out
+    # return nmap_out
 
 
 

@@ -51,4 +51,4 @@ def do_attack(domain):
     p2.close()
     p2.join()
 
-    return result_out
+    # return result_out

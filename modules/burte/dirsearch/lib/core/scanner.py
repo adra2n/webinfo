@@ -33,7 +33,7 @@ from lib.utils.random import rand_string
 
 class Scanner:
     def __init__(self, requester, **kwargs):
-        self.path = kwargs.get("path", "")
+        self.path = kwargs.get("small_path", "")
         self.tested = kwargs.get("tested", [])
         self.context = kwargs.get("context", "all cases")
         self.requester = requester
@@ -44,7 +44,7 @@ class Scanner:
     def setup(self):
         """
         Generate wildcard response information containers, this will be
-        used to compare with other path responses
+        used to compare with other small_path responses
         """
 
         first_path = self.path.replace(
@@ -108,7 +108,7 @@ class Scanner:
 
         # Read from line 129 to 138 to understand the workflow of this.
         if self.wildcard_redirect_regex and response.redirect:
-            # - unquote(): Sometimes, some path characters get encoded or decoded in the response redirect
+            # - unquote(): Sometimes, some small_path characters get encoded or decoded in the response redirect
             # but it's still a wildcard redirect, so unquote everything to prevent false positives
             # - clean_path(): Get rid of queries and DOM in URL because of weird behaviours could happen
             # with them, so messy that I give up on finding a way to test them
@@ -136,11 +136,11 @@ class Scanner:
         every wildcard redirect.
 
         How it works:
-        1. Replace path in 2 redirect URLs (if it gets reflected in) with a mark
+        1. Replace small_path in 2 redirect URLs (if it gets reflected in) with a mark
            (e.g. /path1 -> /foo/path1 and /path2 -> /foo/path2 will become /foo/[mark] for both)
         2. Compare 2 redirects and generate a regex that matches both
            (e.g. /foo/[mark]?a=1 and /foo/[mark]?a=2 will have the regex: ^/foo/[mark]?a=(.*)$)
-        3. Next time if it redirects, replace mark in regex with the path and check if it matches
+        3. Next time if it redirects, replace mark in regex with the small_path and check if it matches
            (e.g. /path3 -> /foo/path3?a=5, the regex becomes ^/foo/path3?a=(.*)$, which matches)
         """
 

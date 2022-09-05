@@ -62,3 +62,4 @@
 /api
 /cms
 /console/j_security_check
+/login

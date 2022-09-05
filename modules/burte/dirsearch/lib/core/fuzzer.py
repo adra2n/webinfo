@@ -111,7 +111,7 @@ class Fuzzer:
             self._threads.append(new_thread)
 
     def get_scanners_for(self, path):
-        # Clean the path, so can check for extensions/suffixes
+        # Clean the small_path, so can check for extensions/suffixes
         path = clean_path(path)
 
         for prefix in self.scanners["prefixes"]:

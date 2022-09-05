@@ -135,8 +135,8 @@ class Dictionary:
                     if is_blacklist:
                         continue
 
-                    # If "forced extensions" is used and the path is not a directory (terminated by /)
-                    # or has had an extension already, append extensions to the path
+                    # If "forced extensions" is used and the small_path is not a directory (terminated by /)
+                    # or has had an extension already, append extensions to the small_path
                     if (
                         options["force_extensions"]
                         and "." not in line
@@ -197,7 +197,7 @@ class Dictionary:
         if not path or path.startswith("#"):
             return False
 
-        # Skip if the path has excluded extensions
+        # Skip if the small_path has excluded extensions
         cleaned_path = clean_path(path)
         if cleaned_path.endswith(
             tuple(f".{extension}" for extension in options["exclude_extensions"])

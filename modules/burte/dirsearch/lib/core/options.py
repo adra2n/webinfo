@@ -265,7 +265,7 @@ def parse_config(opt):
     opt.wordlists = opt.wordlists or config.safe_get(
         "dictionary",
         "wordlists",
-        FileUtils.build_path(SCRIPT_PATH, "db", "dicc.txt"),
+        FileUtils.build_path(SCRIPT_PATH, "db", "big_path"),
     )
     opt.extensions = opt.extensions or config.safe_get(
         "dictionary", "default-extensions"

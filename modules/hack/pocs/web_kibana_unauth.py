@@ -12,7 +12,7 @@ def get_headers():
 
 def check(ip, port):
     params = {
-        "path": "_search",
+        "small_path": "_search",
         "method": "POST"
     }
 
