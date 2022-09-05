@@ -76,7 +76,7 @@ def check(item, path_out):
 
                         try:
                             req = requests.get(url, timeout=3, verify=False, allow_redirects=False)
-                            if req.status_code not in [301, 302, 403, 404, 405, 500, 501, 502, 503] and len(req.content)>200:
+                            if req.status_code not in [301, 302, 403, 404, 405, 500, 501, 502, 503] and len(req.content)>500:
                                 res = {
                                     "content-length": len(req.content),
                                     "status": req.status_code,
