@@ -3,6 +3,7 @@ from config import ip_count
 from IPy import IP
 import os
 import traceback
+import threading
 from json import loads as json_loads
 from config import result_dir, path_dict
 import queue
@@ -12,6 +13,8 @@ import json
 from utils.get_title import gettitle
 from utils.print_color import print_color
 
+lock = threading.Lock()
+
 
 def domain_burte(domain):
     domain_out = os.path.join(result_dir, f"{domain}.json")
@@ -20,9 +23,6 @@ def domain_burte(domain):
         os.system(amass_cmd)
     except Exception as e:
         traceback.print_exc()
-
-    # return domain_out
-
 
 def getIP(domain):
     ip_set = []
@@ -60,41 +60,44 @@ def getIP(domain):
 
 
 def check(item, path_out):
+    res_list=[]
     check_url = f"http://{item}/"
     print_color(f"正在扫描{check_url}", 'i')
-    test_url = check_url + "sadsadasdasdasdasdasasd"
+    test_url = check_url + "noexit_path"
     try:
         test_r = requests.get(test_url, timeout=2, verify=False)
         if test_r.status_code == 200 or test_r.status_code == 500:
             pass
         else:
-            with open(path_out, 'a') as fd:
-                with open(path_dict, 'r') as f:
-                    lines = f.readlines()
-                    for item in lines:
-                        url = check_url + item.strip()
-
-                        try:
-                            req = requests.get(url, timeout=3, verify=False, allow_redirects=False)
-                            if req.status_code not in [301, 302, 403, 404, 405, 500, 501, 502, 503] and len(req.content)>500:
-                                res = {
-                                    "content-length": len(req.content),
-                                    "status": req.status_code,
-                                    "url": req.url,
-                                    "title": gettitle(req.url)
-                                }
-                                fd.writelines(json.dumps(res, ensure_ascii=False))
-                                fd.writelines("\n")
-
-                        except Exception as e:
-                            # traceback.print_exc()
-                            pass
-                        # print(e)
-
+            with open(path_dict, 'r') as f:
+                lines = f.readlines()
+                for item in lines:
+                    url = check_url + item.strip()
+                    try:
+                        req = requests.get(url, timeout=3, verify=False, allow_redirects=False)
+                        if req.status_code not in [301, 302, 403, 404, 405, 500, 501, 502, 503] and len(req.content)>500:
+                            res = {
+                                "content-length": len(req.content),
+                                "status": req.status_code,
+                                "url": req.url,
+                                "title": gettitle(req.url)
+                            }
+                            lock.acquire()
+                            res_list.append(res)
+                            lock.release()
+                    except Exception as e:
+                        # traceback.print_exc()
+                        pass
     except:
         # traceback.print_exc()
         pass
 
+    with open(path_out, 'a') as fd:
+        if len(res_list) < 5:
+            lock.acquire()
+            fd.writelines(json.dumps(res, ensure_ascii=False))
+            fd.writelines("\n")
+            lock.release()
 
 def path_burte(domain):
     Q = queue.Queue()
@@ -117,20 +120,6 @@ def path_burte(domain):
         p.apply_async(check, args=(item, path_out,))
     p.close()
     p.join()
-    # fd.writelines(host)
-    # fd.writelines('\n')
-
-    # try:
-    #     cmd = f"python {dirscan} -x 301,302,403,404,405,500,501,502,503 --exclude-texts 'Not found', 'Error' " \
-    #           f"--min-response-size 500 --exclude-response 404.html " \
-    #           f"-l {dir_in} -w {path_dict} " \
-    #           f"-o {path_out} --format json " \
-    #           f"-t {threadNum}"
-    #     os.system(cmd)
-    # except Exception as e:
-    #     traceback.print_exc()
-
-    # return path_out
 
 
 def path_ips_burte(domain):
@@ -163,12 +152,3 @@ def path_ips_burte(domain):
         p.apply_async(check, args=(item, path_out,))
     p.close()
     p.join()
-    # try:
-    #     cmd = f"python {dirscan} -x 301,302,403,404,405,500,501,502,503 --exclude-texts 'Not found', 'Error' " \
-    #           f"--min-response-size 500 --exclude-response 404.html " \
-    #           f"-l {ips_in} -w {path_dict} " \
-    #           f"-o {path_out} --format json " \
-    #           f"-t {threadNum}"
-    #     os.system(cmd)
-    # except Exception as e:
-    #     traceback.print_exc()
