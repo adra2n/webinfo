@@ -14,9 +14,9 @@ from modules.attack import do_attack
 
 from utils.print_color import print_color
 
-from libs.data2xsl import data2xls
-from libs.path_xls import path_xls
-from libs.amass_xls import amass_xls
+from libs.json2xls import data2xls
+from libs.json2xls import path_xls
+from libs.json2xls import amass_xls
 
 def get_args():
     parser = ArgumentParser()
