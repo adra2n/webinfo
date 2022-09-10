@@ -8,7 +8,7 @@ import queue
 from multiprocessing.dummy import Pool as threadpool
 import requests
 import json
-from utils.get_title import gettitle
+from utils.get_info import gettitle
 from utils.print_color import print_color
 
 def check(item,path_out):

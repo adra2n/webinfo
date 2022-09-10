@@ -1,7 +1,7 @@
 import json
 from json import loads as json_loads
 # import json
-from utils.get_title import gettitle
+from utils.get_info import gettitle
 # import urllib3
 # urllib3.disable_warnings()
 

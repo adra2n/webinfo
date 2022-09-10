@@ -8,7 +8,7 @@ from multiprocessing.dummy import Pool as threadpool
 from libnmap.parser import NmapParser, NmapParserException
 from libnmap.process import NmapProcess
 from utils.print_color import print_color
-from utils.get_title import gettitle
+from utils.get_info import get_info
 
 lock = threading.Lock()
 import subprocess
@@ -70,7 +70,7 @@ def nmap_doscan(item,nmap_out):
                     else:
                         if serv.service =="http":
                             url=f"http://{host.address}:{str(serv.port)}"
-                            title=gettitle(url)
+                            _,_,title=get_info(url)
                         else:
                             title=""
 

@@ -10,8 +10,9 @@ import queue
 from multiprocessing.dummy import Pool as threadpool
 import requests
 import json
-from utils.get_title import gettitle
+from utils.get_info import get_info
 from utils.print_color import print_color
+from libs.httplibs import requests_headers
 
 lock = threading.Lock()
 
@@ -65,7 +66,7 @@ def check(item, path_out):
     print_color(f"正在扫描{check_url}", 'i')
     test_url = check_url + "noexit_path"
     try:
-        test_r = requests.get(test_url, timeout=2, verify=False)
+        test_r = requests.get(test_url, headers=requests_headers(),timeout=2, verify=False)
         if test_r.status_code == 200 or test_r.status_code == 500:
             pass
         else:
@@ -74,13 +75,14 @@ def check(item, path_out):
                 for item in lines:
                     url = check_url + item.strip()
                     try:
-                        req = requests.get(url, timeout=3, verify=False, allow_redirects=False)
+                        req = requests.get(url, headers=requests_headers(),timeout=3, verify=False, allow_redirects=False)
                         if req.status_code not in [301, 302, 403, 404, 405, 500, 501, 502, 503] and len(req.content)>500:
+                            _,_,title = get_info(req.url)
                             res = {
                                 "content-length": len(req.content),
                                 "status": req.status_code,
                                 "url": req.url,
-                                "title": gettitle(req.url)
+                                "title": title
                             }
                             lock.acquire()
                             res_list.append(res)

@@ -41,7 +41,7 @@ def get_args():
     parser.add_argument('-ns',
                         action='store_true',
                         help="进行nmap端口扫描，获取端口服务信息")
-    parser.add_argument('-poc',
+    parser.add_argument('-hack',
                         action='store_true',
                         help="进行poc扫描，对端口服务进行漏洞扫描")
     parser.add_argument('--test',
@@ -187,7 +187,7 @@ def main():
         except Exception as e:
             print_color(f"出现错误，错误信息{e},请检查", 'e')
 
-    if args.poc:
+    if args.hack:
         try:
             domain_out = os.path.join(result_dir, f"{args.domain}.json")
             with open(domain_out, 'r') as fh:

@@ -1,10 +1,10 @@
 # webinfo
 
-> 现在命令提醒还不完善，需要先执行-dm，在执行其他的，-ms、-ns需要先执行-ip，-poc需要先执行-ns
+> 现在命令提醒还不完善，需要先执行-dm，在执行其他的，-ms、-ns需要先执行-ip，-hack需要先执行-ns
 
 一款自动化收集信息的工具，已经完成以下功能：
 ```
-usage: main.py [-h] -d DOMAIN [-dm] [-dr] [-ip] [-ms] [-ns] [-poc] [--test]
+usage: main.py [-h] -d DOMAIN [-dm] [-dr] [-ip] [-ms] [-ns] [-hack] [--test]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -15,7 +15,7 @@ optional arguments:
   -ip                   提取ip地址
   -ms                   进行masscan端口扫描，获取端口开放情况
   -ns                   进行nmap端口扫描，获取端口服务信息
-  -poc                  进行poc扫描，对端口服务进行漏洞扫描
+  -hack                  进行poc扫描，对端口服务进行漏洞扫描
   --test                测试，默认为false
 ```
 
@@ -56,7 +56,13 @@ TODO:
 
 [ ] 对路径的扫描结果进行处理，一个路径扫描出20多个路径返回200，就是存在问题，直接舍弃掉
 
+### 2022/9/9
 
+[+] 对获取title的代码进行修改，不会出现乱码
+
+[+] 增加header的随机选取
+
+[ ] 增加web指纹识别部分代码，计划选用TideFinger
 
 
 
