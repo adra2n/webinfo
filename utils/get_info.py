@@ -71,5 +71,5 @@ def check_rule(key, header, body, title):
 
 
 
-_,_,title=get_info("https://www.baidu.com")
-print(title)
+# _,_,title=get_info("https://www.baidu.com")
+# print(title)

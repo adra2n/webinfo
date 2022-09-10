@@ -15,10 +15,11 @@ from modules.attack import do_attack
 from utils.print_color import print_color
 
 from libs.json2xls import data2xls
-from libs.json2xls import path_xls
+# from libs.json2xls import path_xls
 from libs.json2xls import amass_xls
 
 def get_args():
+
     parser = ArgumentParser()
     parser.add_argument('-d', '--domain',
                         help='需要扫描的域名地址',
@@ -70,7 +71,7 @@ def main():
         sheet_name = "域名信息"
         name_list = ['name', 'domain', 'ip', 'cidr', 'asn', 'desc', 'tag', 'source']
         try:
-            count = amass_xls(xls,domain_out, csv_out, sheet_name, name_list)
+            amass_xls(xls,domain_out, csv_out, sheet_name, name_list)
             # print_color('写入 ' + str(count) + ' 行', 'i')
             print_color('域名写入完成', 'g')
         except Exception as e:
@@ -95,11 +96,11 @@ def main():
             path_out = os.path.join(result_dir, f"{args.domain}_path")
         print_color("扫描结束", 'g')
         print_color("开始写路径文件", 'i')
-        sheet_name = "Domain路径信息"
-        name_list = ['url', 'status','length','title']
+        sheet_name = "域名路径信息"
+        name_list = ['url', 'status','content-length','title']
         newb = copy(workbook)
         try:
-            path_xls(newb,path_out, csv_out, sheet_name, name_list)
+            data2xls(newb,path_out, csv_out, sheet_name, name_list)
             print_color("路径写入成功", 'g')
         except Exception as e:
             print_color(f"出现错误，错误信息{e},请检查", 'e')
