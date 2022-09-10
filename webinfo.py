@@ -1,4 +1,5 @@
 import os.path
+import traceback
 from argparse import ArgumentParser
 import xlwt as ExcelWrite
 import xlrd
@@ -129,10 +130,11 @@ def main():
     if args.ips:
         csv_out = os.path.join(result_dir, f"{args.domain}.xls")
         try:
-            mass_out = os.path.join(result_dir, f"{args.domain}.masscan")
+            mass_out = os.path.join(result_dir, f"{args.domain}_masscan")
             with open(mass_out, 'r') as fh:
                 pass
         except:
+            traceback.print_exc()
             print_color("请先运行masscan扫描获取开放的端口", 'e')
             return 0
         # getIP(args.domain)
@@ -146,10 +148,10 @@ def main():
         print_color("扫描结束", 'g')
         print_color("开始写路径文件", 'i')
         sheet_name = "IPS路径信息"
-        name_list = ['url', 'status', 'length', 'title', 'redirect']
+        name_list = ['url', 'status', 'content-length', 'title']
         newb = copy(workbook)
         try:
-            path_xls(newb, path_out, csv_out, sheet_name, name_list)
+            data2xls(newb, path_out, csv_out, sheet_name, name_list)
             print_color("路径写入成功", 'g')
         except Exception as e:
             print_color(f"出现错误，错误信息{e},请检查",'e')
@@ -163,7 +165,7 @@ def main():
             print_color("请先运行dm收集域名信息", 'e')
             return 0
         try:
-            mass_out = os.path.join(result_dir, f"{args.domain}.masscan")
+            mass_out = os.path.join(result_dir, f"{args.domain}_masscan")
             with open(mass_out, 'r') as fh:
                 pass
         except:
@@ -197,14 +199,14 @@ def main():
             print_color("请先运行dm收集域名信息", 'e')
             return 0
         try:
-            mass_out = os.path.join(result_dir, f"{args.domain}.masscan")
+            mass_out = os.path.join(result_dir, f"{args.domain}_masscan")
             with open(mass_out, 'r') as fh:
                 pass
         except:
             print_color("请先运行masscan扫描获取开放的端口", 'e')
             return 0
         try:
-            nmap_out = os.path.join(result_dir, f"{args.domain}.nmap")
+            nmap_out = os.path.join(result_dir, f"{args.domain}_nmap")
             with open(nmap_out, 'r') as fh:
                 pass
         except:

@@ -20,8 +20,9 @@ def do_masscan(domain):
     mass_out = os.path.join(result_dir, f"{domain}_masscan")
     ips_in = os.path.join(result_dir, f"{domain}_ips")
     masscan_start_command = f'masscan --ports {ports} --rate=1000 -iL {ips_in} -oJ {mass_out} --append-output'
-    p3 = subprocess.Popen([masscan_start_command], shell=True)
-    p3.wait()
+    # p3 = subprocess.Popen([masscan_start_command], shell=True)
+    os.system(masscan_start_command)
+    # p3.wait()
 
 
 def pre_nmap(domain):

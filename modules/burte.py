@@ -125,34 +125,36 @@ def path_ips_burte(domain):
     # with open(ips_in, 'a') as fd:
 
     with open(mass_out) as f:
-        with open(path_dict, 'r') as f:
+        with open(path_dict, 'r') as fp:
             lines = f.readlines()
             curr = lines[1:]
             curr = curr[:-1]
             for eachline in curr:
                 line = eachline.strip().strip(',')
                 if line:
+                    js = json_loads(line)
+                    ip = str(js['ip'])  # 这里读取的i平时unicode类型的。
+                    port = js['ports'][0]['port']
+                    host = f"{ip}:{port}"
+                    if int(port) in [443,8443]:
+                        sc="https"
+                    else:
+                        sc="http"
+                    test_url = f"{sc}://{host}/noexit_path"
                     try:
-                        js = json_loads(line)
-                        ip = str(js['ip'])  # 这里读取的i平时unicode类型的。
-                        port = js['ports'][0]['port']
-                        host = f"{ip}:{port}"
-                        test_url = f"https://{host}/noexit_path"
-                        try:
-                            test_r = requests.get(test_url, headers=requests_headers(), timeout=2, verify=False)
-                            if test_r.status_code == 200 or test_r.status_code == 500 or test_r.status_code == 403:
-                                print_color(f"{host}，返回值{test_r.status_code},跳过扫描",'i')
-                            else:
-                                print_color(f"{test_url}，返回值{test_r.status_code}，开始扫描", 'i')
-                                lines = f.readlines()
-                                for item in lines:
-                                    url = f"https://{host}/{item.strip()}"
-                                    Q.put(url)
-                        except:
-                            pass
-                        # Q.put(host)
+                        test_r = requests.get(test_url, headers=requests_headers(), timeout=2, verify=False)
+                        if test_r.status_code == 200 or test_r.status_code == 500 or test_r.status_code == 403:
+                            print_color(f"{host}，返回值{test_r.status_code},跳过扫描",'i')
+                        else:
+                            print_color(f"{test_url}，返回值{test_r.status_code}，开始扫描", 'i')
+                            lines = fp.readlines()
+                            for item in lines:
+                                url = f"{sc}://{host}/{item.strip()}"
+                                Q.put(url)
                     except:
-                        traceback.print_exc()
+                        # print_color(f"{test_url} 无法连接，跳过扫描", 'i')
+                        pass
+                    # Q.put(host)
 
                     p = threadpool(100)
                     while not Q.empty():
