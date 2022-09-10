@@ -8,8 +8,8 @@ from xlutils.copy import copy
 from config import result_dir
 
 from modules.burte import domain_burte
-from modules.burte import getIP
-from modules.burte import path_burte,path_ips_burte
+from modules.burte import get_asset
+from modules.burte import path_burte
 from modules.scan import do_masscan,do_nmap
 from modules.attack import do_attack
 
@@ -18,6 +18,7 @@ from utils.print_color import print_color
 from libs.json2xls import data2xls
 # from libs.json2xls import path_xls
 from libs.json2xls import amass_xls
+from utils.banner import showbanner
 
 def get_args():
 
@@ -28,15 +29,17 @@ def get_args():
     parser.add_argument('-dm',
                         action='store_true',
                         help="直接进行域名扫描")
+    parser.add_argument('-host',
+                        action='store_true',
+                        help="提取资产")
+
     parser.add_argument('-dr',
                         action='store_true',
                         help="进行路径扫描")
-    parser.add_argument('-ip',
-                        action='store_true',
-                        help="提取ip地址")
-    parser.add_argument('-ips',
-                        action='store_true',
-                        help="进行ip地址路径扫描")
+    # parser.add_argument('-ip',
+    #                     action='store_true',
+    #                     help="提取ip地址")
+
     parser.add_argument('-ms',
                         action='store_true',
                         help="进行masscan端口扫描，获取端口开放情况")
@@ -51,7 +54,6 @@ def get_args():
                         help="测试，默认为false")
 
     return parser
-
 
 def main():
     xls = ExcelWrite.Workbook()
@@ -74,9 +76,21 @@ def main():
         try:
             amass_xls(xls,domain_out, csv_out, sheet_name, name_list)
             # print_color('写入 ' + str(count) + ' 行', 'i')
-            print_color('域名写入完成', 'g')
+            print_color('域名写入完成,可以进行下一步路径扫描，请运行 -asset', 'g')
         except Exception as e:
             print_color(f"出现错误，错误信息{e},请检查", 'e')
+
+    if args.host:
+        try:
+            domain_out = os.path.join(result_dir, f"{args.domain}.json")
+            with open(domain_out, 'r') as fh:
+                pass
+        except:
+            print_color("请先运行dm收集域名信息",'e')
+            return 0
+        get_asset(args.domain)
+        print_color("1、资产搜集完成，可以运行masscan进行端口存活扫描，请运行-ms", 'g')
+        print_color("1、资产搜集完成，可以运行dirsearch进行路径存活扫描，请运行-dr", 'g')
 
     if args.dr:
         csv_out = os.path.join(result_dir, f"{args.domain}.xls")
@@ -93,8 +107,12 @@ def main():
         if args.test:
             path_out=os.path.join(result_dir, f"{args.domain}_path")
         else:
-            path_burte(args.domain)
-            path_out = os.path.join(result_dir, f"{args.domain}_path")
+            try:
+                path_burte(args.domain)
+                path_out = os.path.join(result_dir, f"{args.domain}_path")
+            except:
+                print_color(f"出现错误，错误信息{e},请检查", 'e')
+                exit(0)
         print_color("扫描结束", 'g')
         print_color("开始写路径文件", 'i')
         sheet_name = "域名路径信息"
@@ -106,16 +124,6 @@ def main():
         except Exception as e:
             print_color(f"出现错误，错误信息{e},请检查", 'e')
 
-    if args.ip:
-        try:
-            domain_out = os.path.join(result_dir, f"{args.domain}.json")
-            with open(domain_out, 'r') as fh:
-                pass
-        except:
-            print_color("请先运行dm收集域名信息",'e')
-            return 0
-        getIP(args.domain)
-
     if args.ms:
         try:
             domain_out = os.path.join(result_dir, f"{args.domain}.json")
@@ -125,36 +133,37 @@ def main():
             print_color("请先运行dm收集域名信息", 'e')
             return 0
         do_masscan(args.domain)
+        print_color("运行masscan完成，可以运行nmap进行服务扫描，请运行-ns\n", 'g')
         pass
 
-    if args.ips:
-        csv_out = os.path.join(result_dir, f"{args.domain}.xls")
-        try:
-            mass_out = os.path.join(result_dir, f"{args.domain}_masscan")
-            with open(mass_out, 'r') as fh:
-                pass
-        except:
-            traceback.print_exc()
-            print_color("请先运行masscan扫描获取开放的端口", 'e')
-            return 0
-        # getIP(args.domain)
-        workbook = xlrd.open_workbook(csv_out)
-        print_color("开始进行IP路径爆破", "i")
-        if args.test:
-            path_out = os.path.join(result_dir, f"{args.domain}_ips_path")
-        else:
-            path_ips_burte(args.domain)
-            path_out = os.path.join(result_dir, f"{args.domain}_ips_path")
-        print_color("扫描结束", 'g')
-        print_color("开始写路径文件", 'i')
-        sheet_name = "IPS路径信息"
-        name_list = ['url', 'status', 'content-length', 'title']
-        newb = copy(workbook)
-        try:
-            data2xls(newb, path_out, csv_out, sheet_name, name_list)
-            print_color("路径写入成功", 'g')
-        except Exception as e:
-            print_color(f"出现错误，错误信息{e},请检查",'e')
+    # if args.ips:
+    #     csv_out = os.path.join(result_dir, f"{args.domain}.xls")
+    #     try:
+    #         mass_out = os.path.join(result_dir, f"{args.domain}_masscan")
+    #         with open(mass_out, 'r') as fh:
+    #             pass
+    #     except:
+    #         traceback.print_exc()
+    #         print_color("请先运行masscan扫描获取开放的端口", 'e')
+    #         return 0
+    #     # getIP(args.domain)
+    #     workbook = xlrd.open_workbook(csv_out)
+    #     print_color("开始进行IP路径爆破", "i")
+    #     if args.test:
+    #         path_out = os.path.join(result_dir, f"{args.domain}_ips_path")
+    #     else:
+    #         path_ips_burte(args.domain)
+    #         path_out = os.path.join(result_dir, f"{args.domain}_ips_path")
+    #     print_color("扫描结束", 'g')
+    #     print_color("开始写路径文件", 'i')
+    #     sheet_name = "IPS路径信息"
+    #     name_list = ['url', 'status', 'content-length', 'title']
+    #     newb = copy(workbook)
+    #     try:
+    #         data2xls(newb, path_out, csv_out, sheet_name, name_list)
+    #         print_color("路径写入成功", 'g')
+    #     except Exception as e:
+    #         print_color(f"出现错误，错误信息{e},请检查",'e')
 
     if args.ns:
         try:
@@ -186,7 +195,7 @@ def main():
         newb = copy(workbook)
         try:
             data2xls(newb,nmap_out, csv_out, sheet_name, name_list)
-            print_color("nmap文件写入成功", 'g')
+            print_color("nmap文件写入成功，可以进行poc扫描，请运行-hack进行", 'g')
         except Exception as e:
             print_color(f"出现错误，错误信息{e},请检查", 'e')
 
@@ -225,10 +234,11 @@ def main():
         newb = copy(workbook)
         try:
             data2xls(newb, poc_out, csv_out, sheet_name, name_list)
-            print_color("漏洞文件写入成功", 'g')
+            print_color("漏洞文件写入成功，扫描完成了", 'g')
         except Exception as e:
             print_color(f"出现错误，错误信息{e},请检查", 'e')
 
-
 if __name__ == "__main__":
+    showbanner()
     main()
+

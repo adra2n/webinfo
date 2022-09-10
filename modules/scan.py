@@ -63,17 +63,22 @@ def nmap_doscan(item,nmap_out):
         # print(nmproc.stdout)
         parsed = NmapParser.parse(str(nmproc.stdout))  # 需要是字符串类型
         # print(parsed.hosts[0].services)
+        # print(parsed.hosts)
         with open(nmap_out, "a") as f:
             for host in parsed.hosts:
                 for serv in host.services:
                     if str(serv.service).lower() == "tcpwrapped":
                         pass
                     else:
-                        if serv.service =="http":
-                            url=f"http://{host.address}:{str(serv.port)}"
+                        if str(serv.service) == 'http':
+                            if int(item_port) in [443, 8443]:
+                                url=f"https://{item_host}:{item_port}"
+                            else:
+                                url=f"http://{item_host}:{item_port}"
+
                             _,_,title=get_info(url)
                         else:
-                            title=""
+                            title=''
 
                         data = {
                             "host": host.address,
@@ -82,10 +87,28 @@ def nmap_doscan(item,nmap_out):
                             "product": serv.banner,
                             "title":title,
                         }
-
+                        print(data)
                         f.writelines(json.dumps(data,ensure_ascii=False))
                         f.writelines("\n")
                         print_color(f"{data}写入成功",'g')
+
+                    #     if serv.service =="http":
+                    #         url=f"http://{host.address}:{str(serv.port)}"
+                    #         _,_,title=get_info(url)
+                    #     else:
+                    #         title=""
+                    #     print(url,title)
+                        # data = {
+                        #     "host": host.address,
+                        #     "port": str(serv.port),
+                        #     "service": serv.service,
+                        #     "product": serv.banner,
+                        #     "title":title,
+                        # }
+                        # print(data)
+                        # f.writelines(json.dumps(data,ensure_ascii=False))
+                        # f.writelines("\n")
+                        # print_color(f"{data}写入成功",'g')
 
 
 def do_nmap(domain):

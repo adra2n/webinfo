@@ -8,8 +8,8 @@ if platform.system() == "Darwin":
 elif platform.system() == "Linux":
     amass_bin = os.path.abspath(os.path.join(currentdir, "bin/amass_linux"))
 
-# dirscan = os.path.abspath(os.path.join(currentdir, 'bak/burte/dirsearch/dirsearch.py'))
-path_dict = os.path.abspath(os.path.join(currentdir, 'db/small_path'))
+dirscan = os.path.abspath(os.path.join(currentdir, 'bin/dirsearch/dirsearch.py'))
+# path_dict = os.path.abspath(os.path.join(currentdir, 'db/small_path'))
 # path_dict = os.path.abspath(os.path.join(currentdir, 'db/big_path'))
 result_dir = os.path.join(currentdir, "result")
 poc_dir = os.path.abspath(os.path.join(currentdir, 'db/pocs'))

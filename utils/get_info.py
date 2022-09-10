@@ -49,11 +49,7 @@ def get_info(url):
                 t = content[:10]
                 return str(req.headers), content, t
     except:
-        pass
-
-def check_path(item, path_out):
-    # TODO:将path扫描移植到这里
-    pass
+        return '', 0, ''
 
 
 def check_rule(key, header, body, title):
