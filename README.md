@@ -48,9 +48,7 @@ TODO:
 
 ### 2022年9月5日
 
-[+] 新增了对masscan判断出存活的ip的路径扫描 
-
-[+] 舍弃dirsearch，更改为自己的路径爆破脚本
+[+] 新增了对masscan判断出存活的ip的路径扫描
 
 [ ] 需要对路径扫描结果进行进一步处理，排除掉title为空的、默认title的，如"welcome to tengine!"等
 
@@ -63,6 +61,10 @@ TODO:
 [+] 增加header的随机选取
 
 [ ] 增加web指纹识别部分代码，计划选用TideFinger
+
+### 2022/9/11
+
+[+] 更新扫描path脚本为舍弃dirsearch
 
 
 
