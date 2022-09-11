@@ -28,6 +28,7 @@ def poc_run(item_list, result_out):
                 "level": data['level'],
                 "vul": data['vul']
             }
+            print_color(f"{result}写入成功",'g')
             with open(result_out, "a") as f:
                 f.writelines(json.dumps(result, ensure_ascii=False))
                 f.writelines("\n")

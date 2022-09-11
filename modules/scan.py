@@ -87,7 +87,7 @@ def nmap_doscan(item,nmap_out):
                             "product": serv.banner,
                             "title":title,
                         }
-                        print(data)
+                        # print(data)
                         f.writelines(json.dumps(data,ensure_ascii=False))
                         f.writelines("\n")
                         print_color(f"{data}写入成功",'g')

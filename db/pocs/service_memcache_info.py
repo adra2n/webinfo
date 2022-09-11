@@ -38,5 +38,5 @@ if __name__ == "__main__":
         mg = memcache(ip, port)
         mg.check()
 
-# mg=memcache('52.26.163.16',11211)
+# mg=memcache('188.165.50.251',11211)
 # mg.check()

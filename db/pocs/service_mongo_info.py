@@ -21,7 +21,6 @@ class mongodb():
             data = binascii.a2b_hex(
                 "3a000000a741000000000000d40700000000000061646d696e2e24636d640000000000ffffffff130000001069736d6173746572000100000000")
             s.send(data)
-            print(123)
             result = s.recv(1024)
             if b"ismaster" in result:
                 getlog_data = binascii.a2b_hex(
@@ -44,3 +43,6 @@ if __name__ == "__main__":
         port = int(sys.argv[2])
         mg = mongodb(ip, port)
         mg.check()
+
+# mg=mongodb("47.98.219.40",27017)
+# mg.check()

@@ -1,5 +1,6 @@
 # __author__ = 'gaohe'
 # -*- coding:utf-8 -*-
+import traceback
 from subprocess import *
 import json
 import time
@@ -43,8 +44,15 @@ class rsync_test:
             out, code = self.runtime(cmd=command)
             # print out, code
             if code == 0:
+                row = {
+                    "wakaka": "ok",
+                    'level': "Low",
+                    "vul": "Rsync 未授权访问"
+                }
+                print(row)
                 for i in out:
-                    module = i.split('\t')[0]
+                    # print(i)
+                    module = str(i).split('\t')[0]
                     command = 'rsync --timeout=1 --port={port} {ip}::{module}'.format(
                         port=self.port,
                         ip=self.ip,
@@ -71,7 +79,8 @@ class rsync_test:
             else:
                 pass
         except Exception as e:
-            print(e)
+            traceback.print_exc()
+            pass
 
 
 if __name__ == "__main__":
@@ -80,3 +89,6 @@ if __name__ == "__main__":
         port = int(sys.argv[2])
         rs = rsync_test(ip, port)
         rs.check()
+
+# rs = rsync_test("112.223.237.201","873")
+# rs.check()

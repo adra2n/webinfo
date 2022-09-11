@@ -5,6 +5,7 @@ import socket
 import struct
 import sys
 import json
+import traceback
 
 
 class jdwp():
@@ -24,17 +25,18 @@ class jdwp():
             # print self.s.recv(1024)
             return self.s.recv(1024)
         except:
+            traceback.print_exc()
             return False
 
     def check(self):
         if self.jdwp_connect() == "JDWP-Handshake":
-            # print 1111
+            print(1111)
             packet_version = struct.pack('11B', 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x09, 0x00, 0x01, 0x01)
             packet_version2 = struct.pack('11B', 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x09, 0x00, 0x01, 0x07)
             for i in [packet_version,packet_version2]:
                 self.s.send(i)
                 data = self.s.recv(1024)
-                # print data
+                print(data)
                 if b'JVM Debug' in data or b'VM version' in data:
                     data = {
                         "wakaka": 'ok',
@@ -47,8 +49,7 @@ class jdwp():
                 pass
             self.s.close()
 
-# jdb=jdwp('10.99.168.204', 5006)
-# print jdb.jdwp_version()
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
@@ -56,3 +57,6 @@ if __name__ == "__main__":
         port = int(sys.argv[2])
         mg = jdwp(ip, port)
         mg.check()
+
+jdb=jdwp('101.201.130.138', 8086)
+jdb.check()
