@@ -9,7 +9,7 @@ class Config:
     # 工具路径（可环境变量覆盖）
     PUREDNS_BIN = os.getenv("WEBINFO_PUREDNS_BIN", os.path.expanduser("~/go/bin/puredns"))
     PUREDNS_RESOLVERS = os.getenv("WEBINFO_PUREDNS_RESOLVERS", os.path.expanduser("~/.config/puredns/resolvers.txt"))
-    PUREDNS_RATE = int(os.getenv("WEBINFO_PUREDNS_RATE", "100"))  # 低速防封
+    PUREDNS_RATE = int(os.getenv("WEBINFO_PUREDNS_RATE", "50"))  # 低速防封
     DIRSEARCH = os.getenv(
         "WEBINFO_DIRSEARCH",
         os.path.join(BASE_DIR, "bin", "dirsearch", "dirsearch.py"),
@@ -20,18 +20,13 @@ class Config:
     TIMEOUT = int(os.getenv("WEBINFO_TIMEOUT", "10"))
     IP_RANGE = int(os.getenv("WEBINFO_IP_RANGE", "5"))
 
-    # 分层端口扫描 - 原始目标
+    # 分层端口扫描
     NAABU_RATE = int(os.getenv("WEBINFO_NAABU_RATE", "100"))
     NAABU_PORTS = os.getenv("WEBINFO_NAABU_PORTS", "1-65535")  # 全端口
     NAABU_SCAN_TYPE = os.getenv("WEBINFO_NAABU_SCAN_TYPE", "s")  # SYN 扫描
     NAABU_HOST_DISCOVERY = os.getenv("WEBINFO_NAABU_HOST_DISCOVERY", "true")  # 主机存活检测
     NAABU_EXCLUDE_CDN = os.getenv("WEBINFO_NAABU_EXCLUDE_CDN", "true")  # 排除 CDN
     NMAP_EXTRA_ARGS = os.getenv("WEBINFO_NMAP_EXTRA", "-sV -T4 --open --script=banner").split()
-
-    # CIDR 扩展扫描
-    EXPAND_CIDR = os.getenv("WEBINFO_EXPAND_CIDR", "true").lower() == "true"  # 是否扩展到 C 段
-    CIDR_PORTS = os.getenv("WEBINFO_CIDR_PORTS", "top-1000")  # C 段用 top-1000 端口
-    CIDR_RATE = int(os.getenv("WEBINFO_CIDR_RATE", "200"))  # C 段限速
 
     # 路径扫描
     PATH_EXTENSIONS = os.getenv("WEBINFO_PATH_EXT", "php,aspx,jsp")
