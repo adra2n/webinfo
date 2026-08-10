@@ -72,21 +72,23 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
     )
 
     found_count = 0
+    hosts_scanned = 0
     while True:
         line = proc.stderr.readline()
         if not line and proc.poll() is not None:
             break
         if line:
-            # 解析 naabu 的进度输出
-            match = re.search(r"Processed:\s*(\d+)\s+Rate:\s*(\d+)", line)
+            # 解析 naabu 的进度输出: "Found X ports on host xxx"
+            match = re.search(r"Found\s+(\d+)\s+ports?\s+on\s+host\s+(\S+)", line)
             if match:
-                processed = int(match.group(1))
-                rate_actual = int(match.group(2))
-                print(f"\r[{label}] 已扫描: {processed}/{target_count} IPs, 速率: {rate_actual}/s", end="", flush=True)
-            elif "found" in line.lower():
-                found_match = re.search(r"(\d+)\s+found", line, re.IGNORECASE)
-                if found_match:
-                    found_count = int(found_match.group(1))
+                found_count += 1
+                hosts_scanned += 1
+                print(f"\r[{label}] 已发现 {found_count} 个开放端口, 已扫描 {hosts_scanned}/{target_count} 个主机", end="", flush=True)
+            # 解析 banner 输出
+            elif "projectdiscovery" in line or "naabu version" in line:
+                pass  # 跳过 banner
+            elif "Running" in line or "Host discovery" in line:
+                pass  # 跳过启动信息
 
     print()  # 换行
     proc.wait()
