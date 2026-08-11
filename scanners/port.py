@@ -114,9 +114,12 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
             host_port_match = re.match(r"^([^:]+):(\d+)$", line)
             if host_port_match:
                 host = host_port_match.group(1)
+                port = host_port_match.group(2)
                 found_count += 1
                 if host not in scanned_hosts:
                     scanned_hosts.add(host)
+                # 实时输出发现的端口
+                print(f"\n  [+] {host}:{port}", end="", flush=True)
                 _print_progress()
             # 解析 naabu 的进度输出: "Found X ports on host xxx"
             elif "Found" in line and "ports" in line and "on host" in line:
