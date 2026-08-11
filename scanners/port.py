@@ -2,6 +2,7 @@ import os
 import re
 import json
 import subprocess
+import time
 from config import config
 from core.context import ScanContext
 from utils.process import run_cmd
@@ -71,8 +72,35 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
         text=True,
     )
 
+    start_time = time.time()
     found_count = 0
     hosts_scanned = 0
+    
+    def _print_progress():
+        """打印进度条"""
+        elapsed = time.time() - start_time
+        if hosts_scanned > 0 and elapsed > 0:
+            rate_actual = hosts_scanned / elapsed
+            remaining = target_count - hosts_scanned
+            eta = remaining / rate_actual if rate_actual > 0 else 0
+            
+            # 格式化时间
+            def _format_time(seconds):
+                hours = int(seconds // 3600)
+                minutes = int((seconds % 3600) // 60)
+                secs = int(seconds % 60)
+                return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+            
+            # 计算进度条长度
+            bar_length = 40
+            progress = hosts_scanned / target_count if target_count > 0 else 0
+            filled = int(bar_length * progress)
+            bar = "█" * filled + "░" * (bar_length - filled)
+            
+            print(f"\r[ETA {_format_time(eta)}] |{bar}| {hosts_scanned}/{target_count} rate: {rate_actual:.0f} qps (time: {_format_time(elapsed)})", end="", flush=True)
+        else:
+            print(f"\r[{label}] 准备中...", end="", flush=True)
+
     while True:
         line = proc.stderr.readline()
         if not line and proc.poll() is not None:
@@ -83,7 +111,7 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
             if match:
                 found_count += 1
                 hosts_scanned += 1
-                print(f"\r[{label}] 已发现 {found_count} 个开放端口, 已扫描 {hosts_scanned}/{target_count} 个主机", end="", flush=True)
+                _print_progress()
             # 解析 banner 输出
             elif "projectdiscovery" in line or "naabu version" in line:
                 pass  # 跳过 banner
