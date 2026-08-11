@@ -355,6 +355,11 @@ def scan(context: ScanContext):
     log.info("开始端口扫描")
 
     # Step 1: 扫描 IP 列表（全端口）
+    if not os.path.exists(context.ips_file):
+        log.warning(f"IP 文件不存在: {context.ips_file}，跳过端口扫描")
+        context.mark_step_done("sc")
+        return
+
     discovered = _run_naabu_with_progress(context, context.ips_file, config.NAABU_PORTS, config.NAABU_RATE, "IP扫描")
     log.info(f"IP 扫描发现 {len(discovered)} 个开放端口")
 
