@@ -21,13 +21,13 @@ class Config:
     IP_RANGE = int(os.getenv("WEBINFO_IP_RANGE", "5"))
 
     # 分层端口扫描 - 原始目标
-    NAABU_RATE = int(os.getenv("WEBINFO_NAABU_RATE", "500"))
+    NAABU_RATE = int(os.getenv("WEBINFO_NAABU_RATE", "300"))
     NAABU_PORTS = os.getenv("WEBINFO_NAABU_PORTS", "1-65535")  # 全端口
     NAABU_SCAN_TYPE = os.getenv("WEBINFO_NAABU_SCAN_TYPE", "s")  # SYN 扫描
     NAABU_HOST_DISCOVERY = os.getenv("WEBINFO_NAABU_HOST_DISCOVERY", "true")  # 主机存活检测
     NAABU_EXCLUDE_CDN = os.getenv("WEBINFO_NAABU_EXCLUDE_CDN", "true")  # 排除 CDN
     NAABU_STREAM = os.getenv("WEBINFO_NAABU_STREAM", "true").lower() == "true"  # 流模式加速
-    NAABU_THREADS = int(os.getenv("WEBINFO_NAABU_THREADS", "50"))  # 并发线程数
+    NAABU_THREADS = int(os.getenv("WEBINFO_NAABU_THREADS", "30"))  # 并发线程数
     NMAP_EXTRA_ARGS = os.getenv("WEBINFO_NMAP_EXTRA", "-sV -T4 --open --script=banner").split()
 
     # CIDR 扩展扫描
