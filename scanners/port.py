@@ -5,6 +5,7 @@ import subprocess
 import time
 import threading
 import queue
+from IPy import IP
 from config import config
 from core.context import ScanContext
 from utils.process import run_cmd
@@ -41,6 +42,32 @@ VULN_VERSIONS = [
     ("MongoDB", ["3.0", "3.2", "3.6"], "老版本，存在已知 CVE"),
     ("Redis", ["3.0", "4.0", "5.0"], "老版本，存在已知 CVE"),
 ]
+
+
+def _expand_cidr_to_ips(cidr_file: str, output_file: str) -> int:
+    """将 CIDR 文件展开为 IP 列表"""
+    cidrs = []
+    if os.path.exists(cidr_file):
+        with open(cidr_file) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    cidrs.append(line)
+
+    ips = set()
+    for cidr in cidrs:
+        try:
+            network = IP(cidr)
+            for ip in network:
+                ips.add(str(ip))
+        except Exception:
+            continue
+
+    with open(output_file, "w") as f:
+        for ip in sorted(ips):
+            f.write(ip + "\n")
+
+    return len(ips)
 
 
 def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str, rate: int, label: str) -> list[dict]:
@@ -327,9 +354,16 @@ def scan(context: ScanContext):
 
     # Step 2: CIDR 扩展扫描（top-1000）
     if config.EXPAND_CIDR:
-        cidr_discovered = _run_naabu_with_progress(context, os.path.join(context.cache_dir, "cidr.txt"), config.CIDR_PORTS, config.CIDR_RATE, "CIDR扩展")
-        log.info(f"CIDR 扩展发现 {len(cidr_discovered)} 个开放端口")
-        discovered.extend(cidr_discovered)
+        cidr_file = os.path.join(context.cache_dir, "cidr.txt")
+        cidr_ips_file = os.path.join(context.cache_dir, "cidr_ips.txt")
+        cidr_count = _expand_cidr_to_ips(cidr_file, cidr_ips_file)
+        if cidr_count > 0:
+            log.info(f"CIDR 展开为 {cidr_count} 个 IP")
+            cidr_discovered = _run_naabu_with_progress(context, cidr_ips_file, config.CIDR_PORTS, config.CIDR_RATE, "CIDR扩展")
+            log.info(f"CIDR 扩展发现 {len(cidr_discovered)} 个开放端口")
+            discovered.extend(cidr_discovered)
+        else:
+            log.info("无 CIDR 网段可扫描")
 
     if discovered:
         # 去重（同一 IP + 端口）
