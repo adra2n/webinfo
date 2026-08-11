@@ -52,6 +52,7 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
         "-l", targets_file,
         "-p", ports,
         "-rate", str(rate),
+        "-c", str(config.NAABU_THREADS),
         "-scan-type", config.NAABU_SCAN_TYPE,
         "-wn",
         "-ec",
