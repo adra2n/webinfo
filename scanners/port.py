@@ -3,6 +3,8 @@ import re
 import json
 import subprocess
 import time
+import threading
+import queue
 from config import config
 from core.context import ScanContext
 from utils.process import run_cmd
@@ -53,7 +55,6 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
         "-scan-type", config.NAABU_SCAN_TYPE,
         "-wn",
         "-ec",
-        "-nmap-cli", "nmap -sV -T4 -Pn --open --script=banner",
         "-json",
         "-o", output_json,
     ]
@@ -109,38 +110,64 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
     # 显示初始进度
     _print_progress()
 
-    while True:
-        line = proc.stderr.readline()
-        if not line and proc.poll() is not None:
-            break
-        if line:
-            line = line.strip()
-            # 解析 naabu 输出的 host:port 格式 (如 "baidu.com:80")
-            host_port_match = re.match(r"^([^:]+):(\d+)$", line)
-            if host_port_match:
-                host = host_port_match.group(1)
-                port = host_port_match.group(2)
-                found_count += 1
-                if host not in scanned_hosts:
-                    scanned_hosts.add(host)
-                    # 更新当前正在扫描的目标（取列表中下一个未扫描的）
-                    for t in target_list:
-                        if t not in scanned_hosts:
-                            current_target = t
-                            break
-                    else:
-                        current_target = "完成"
-                # 实时输出发现的端口
-                print(f"\n  [+] {host}:{port}", end="", flush=True)
-                _print_progress()
+    # 使用线程和队列同时读取 stdout 和 stderr
+    q = queue.Queue()
+    
+    def _reader(stream, label):
+        for line in stream:
+            q.put((label, line))
+        q.put(('done', label))
+    
+    stdout_thread = threading.Thread(target=_reader, args=(proc.stdout, "stdout"))
+    stderr_thread = threading.Thread(target=_reader, args=(proc.stderr, "stderr"))
+    stdout_thread.daemon = True
+    stderr_thread.daemon = True
+    stdout_thread.start()
+    stderr_thread.start()
+
+    # 处理输出
+    done_count = 0
+    while done_count < 2:
+        try:
+            source, line = q.get(timeout=0.1)
+        except queue.Empty:
+            continue
+        
+        if source == "done":
+            done_count += 1
+            continue
+        
+        line = line.strip()
+        
+        if source == "stdout":
+            # stdout: JSON 格式结果
+            if line.startswith("{") and "host" in line and "port" in line:
+                try:
+                    data = json.loads(line)
+                    host = data.get("host", "")
+                    port = data.get("port", 0)
+                    found_count += 1
+                    if host not in scanned_hosts:
+                        scanned_hosts.add(host)
+                        for t in target_list:
+                            if t not in scanned_hosts:
+                                current_target = t
+                                break
+                        else:
+                            current_target = "完成"
+                    print(f"\n  [+] {host}:{port}", end="", flush=True)
+                    _print_progress()
+                except json.JSONDecodeError:
+                    pass
+        elif source == "stderr":
+            # stderr: 信息日志
             # 解析 naabu 的进度输出: "Found X ports on host xxx"
-            elif "Found" in line and "ports" in line and "on host" in line:
+            if "Found" in line and "ports" in line and "on host" in line:
                 found_match = re.search(r"Found\s+(\d+)\s+ports?\s+on\s+host\s+(\S+)", line)
                 if found_match:
                     host = found_match.group(2)
                     if host not in scanned_hosts:
                         scanned_hosts.add(host)
-                        # 更新当前正在扫描的目标
                         for t in target_list:
                             if t not in scanned_hosts:
                                 current_target = t
@@ -148,15 +175,16 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
                         else:
                             current_target = "完成"
                     _print_progress()
-            # 解析 banner 输出
+            # 跳过 banner 和其他信息
             elif "projectdiscovery" in line or "naabu version" in line:
-                pass  # 跳过 banner
+                pass
             elif "Running" in line or "Host discovery" in line:
-                pass  # 跳过启动信息
-            # 跳过其他 [INF] [WRN] 信息
+                pass
             elif line.startswith("[INF]") or line.startswith("[WRN]"):
                 pass
 
+    stdout_thread.join()
+    stderr_thread.join()
     print()  # 换行
     proc.wait()
 
