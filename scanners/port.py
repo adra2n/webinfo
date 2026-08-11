@@ -309,16 +309,16 @@ def _print_results_summary(context: ScanContext, ports: list[dict]):
 
 
 def scan(context: ScanContext):
-    """naabu + nmap 联合扫描，支持 CIDR 扩展"""
+    """naabu 扫描，先扫 IP 再扫 CIDR 扩展"""
     log.info("开始端口扫描")
 
-    # Step 1: 扫描原始目标（全端口）
-    discovered = _run_naabu_with_progress(context, context.hosts_file, config.NAABU_PORTS, config.NAABU_RATE, "原始目标")
-    log.info(f"原始目标发现 {len(discovered)} 个开放端口")
+    # Step 1: 扫描 IP 列表（全端口）
+    discovered = _run_naabu_with_progress(context, context.ips_file, config.NAABU_PORTS, config.NAABU_RATE, "IP扫描")
+    log.info(f"IP 扫描发现 {len(discovered)} 个开放端口")
 
     # Step 2: CIDR 扩展扫描（top-1000）
     if config.EXPAND_CIDR:
-        cidr_discovered = _run_naabu_with_progress(context, os.path.join(context.cache_dir, "cidr_list.txt"), config.CIDR_PORTS, config.CIDR_RATE, "CIDR扩展")
+        cidr_discovered = _run_naabu_with_progress(context, os.path.join(context.cache_dir, "cidr.txt"), config.CIDR_PORTS, config.CIDR_RATE, "CIDR扩展")
         log.info(f"CIDR 扩展发现 {len(cidr_discovered)} 个开放端口")
         discovered.extend(cidr_discovered)
 
