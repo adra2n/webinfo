@@ -59,6 +59,10 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
         "-o", output_json,
     ]
 
+    # 排除 CDN IP
+    if config.NAABU_EXCLUDE_CDN:
+        cmd.append("-exclude-cdn")
+
     # 先统计目标数和读取目标列表
     with open(targets_file) as f:
         target_list = [line.strip() for line in f if line.strip()]
