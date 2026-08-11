@@ -58,9 +58,10 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
         "-o", output_json,
     ]
 
-    # 先统计目标数
+    # 先统计目标数和读取目标列表
     with open(targets_file) as f:
-        target_count = sum(1 for line in f if line.strip())
+        target_list = [line.strip() for line in f if line.strip()]
+        target_count = len(target_list)
 
     log.info(f"[{label}] 目标数: {target_count}, 端口: {ports}, 速率: {rate}/s")
 
@@ -76,6 +77,7 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
     found_count = 0
     hosts_with_ports = set()  # 记录已发现端口的主机
     scanned_hosts = set()  # 记录已扫描的主机
+    current_target_idx = 0  # 当前正在扫描的目标索引
     
     def _format_time(seconds):
         """格式化时间"""
@@ -89,6 +91,9 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
         elapsed = time.time() - start_time
         scanned_count = len(scanned_hosts)
         
+        # 显示当前正在扫描的目标
+        current_target = target_list[current_target_idx] if current_target_idx < target_count else "完成"
+        
         if scanned_count > 0 and elapsed > 0:
             rate_actual = scanned_count / elapsed
             remaining = target_count - scanned_count
@@ -100,9 +105,9 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
             filled = int(bar_length * progress)
             bar = "█" * filled + "░" * (bar_length - filled)
             
-            print(f"\r[ETA {_format_time(eta)}] |{bar}| {scanned_count}/{target_count} rate: {rate_actual:.0f} qps (time: {_format_time(elapsed)}) found: {found_count} ports", end="", flush=True)
+            print(f"\r[ETA {_format_time(eta)}] |{bar}| {scanned_count}/{target_count} rate: {rate_actual:.0f} qps (time: {_format_time(elapsed)}) found: {found_count} ports | scanning: {current_target}", end="", flush=True)
         else:
-            print(f"\r[{label}] 准备中...", end="", flush=True)
+            print(f"\r[{label}] 准备中... | scanning: {current_target}", end="", flush=True)
 
     while True:
         line = proc.stderr.readline()
@@ -118,6 +123,11 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
                 found_count += 1
                 if host not in scanned_hosts:
                     scanned_hosts.add(host)
+                    # 更新当前目标索引
+                    if host in target_list:
+                        idx = target_list.index(host)
+                        if idx >= current_target_idx:
+                            current_target_idx = idx + 1
                 # 实时输出发现的端口
                 print(f"\n  [+] {host}:{port}", end="", flush=True)
                 _print_progress()
@@ -128,6 +138,10 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
                     host = found_match.group(2)
                     if host not in scanned_hosts:
                         scanned_hosts.add(host)
+                        if host in target_list:
+                            idx = target_list.index(host)
+                            if idx >= current_target_idx:
+                                current_target_idx = idx + 1
                     _print_progress()
             # 解析 banner 输出
             elif "projectdiscovery" in line or "naabu version" in line:
