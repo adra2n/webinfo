@@ -63,6 +63,10 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
     if config.NAABU_EXCLUDE_CDN:
         cmd.append("-exclude-cdn")
 
+    # 流模式加速（禁用 resume/nmap/verify/retries/shuffling）
+    if config.NAABU_STREAM:
+        cmd.append("-stream")
+
     # 先统计目标数和读取目标列表
     with open(targets_file) as f:
         target_list = [line.strip() for line in f if line.strip()]
