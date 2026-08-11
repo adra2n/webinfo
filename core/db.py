@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS asset (
 CREATE TABLE IF NOT EXISTS port (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
     scan_id   INTEGER REFERENCES scan(id),
+    ip        TEXT,
     host      TEXT,
     port      INTEGER,
     protocol  TEXT DEFAULT 'tcp',
@@ -102,7 +103,17 @@ class ScanDB:
 
     def _init_schema(self):
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    def _migrate(self):
+        """数据库迁移"""
+        # 检查 port 表是否有 ip 列
+        cursor = self.conn.execute("PRAGMA table_info(port)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if "ip" not in columns:
+            self.conn.execute("ALTER TABLE port ADD COLUMN ip TEXT")
+            self.conn.execute("CREATE INDEX IF NOT EXISTS idx_port_ip ON port(ip)")
 
     def create_scan(self, domain: str) -> int:
         """创建扫描任务，返回 scan_id"""
