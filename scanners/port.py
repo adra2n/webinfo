@@ -146,11 +146,12 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
                 try:
                     data = json.loads(line)
                     host = data.get("host", "")
+                    ip = data.get("ip", host)
                     port = data.get("port", 0)
                     found_count += 1
-                    last_found = f"[+] {host}:{port}"
-                    if host not in scanned_hosts:
-                        scanned_hosts.add(host)
+                    last_found = f"[+] {ip}:{port}"
+                    if ip not in scanned_hosts:
+                        scanned_hosts.add(ip)
                         for t in target_list:
                             if t not in scanned_hosts:
                                 current_target = t
