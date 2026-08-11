@@ -385,15 +385,14 @@ def show_results(domain: str, view: str = "summary"):
 
         elif view == "path":
             rows = db.query(
-                "SELECT host, path, status, length, redirect FROM path WHERE scan_id=? ORDER BY host, path",
+                "SELECT url, status, content_length, title FROM path WHERE scan_id=? ORDER BY url",
                 (scan_id,),
             )
             print(f"\n{'='*50}")
             print(f"  路径 ({len(rows)} 条)")
             print(f"  {'-'*46}")
             for r in rows:
-                redir = r["redirect"] or ""
-                print(f"  {r['host']:<30s} {r['status']:<6s} {r['path']:<40s} {r['length']:<8s} {redir}")
+                print(f"  {r['status']:<6s} {r['content_length']:<8s} {r['title']:<20s} {r['url']}")
             print(f"{'='*50}\n")
 
         elif view == "vuln":
