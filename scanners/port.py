@@ -79,6 +79,7 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
     hosts_with_ports = set()  # 记录已发现端口的主机
     scanned_hosts = set()  # 记录已扫描的主机
     current_target = target_list[0] if target_list else "无目标"
+    last_found = ""  # 最近发现的端口
     
     def _format_time(seconds):
         """格式化时间"""
@@ -103,7 +104,7 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
             filled = int(bar_length * progress)
             bar = "█" * filled + "░" * (bar_length - filled)
             
-            print(f"\r[ETA {_format_time(eta)}] |{bar}| {scanned_count}/{target_count} rate: {rate_actual:.0f} qps (time: {_format_time(elapsed)}) found: {found_count} ports | scanning: {current_target}", end="", flush=True)
+            print(f"\r[ETA {_format_time(eta)}] |{bar}| {scanned_count}/{target_count} rate: {rate_actual:.0f} qps (time: {_format_time(elapsed)}) found: {found_count} ports {last_found} | scanning: {current_target}    ", end="", flush=True)
         else:
             print(f"\r[{label}] 准备中... | scanning: {current_target}", end="", flush=True)
 
@@ -147,6 +148,7 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
                     host = data.get("host", "")
                     port = data.get("port", 0)
                     found_count += 1
+                    last_found = f"[+] {host}:{port}"
                     if host not in scanned_hosts:
                         scanned_hosts.add(host)
                         for t in target_list:
@@ -155,7 +157,6 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
                                 break
                         else:
                             current_target = "完成"
-                    print(f"\n  [+] {host}:{port}", end="", flush=True)
                     _print_progress()
                 except json.JSONDecodeError:
                     pass
