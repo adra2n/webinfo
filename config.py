@@ -21,7 +21,7 @@ class Config:
     IP_RANGE = int(os.getenv("WEBINFO_IP_RANGE", "5"))
 
     # 分层端口扫描 - 原始目标
-    NAABU_RATE = int(os.getenv("WEBINFO_NAABU_RATE", "1000"))
+    NAABU_RATE = int(os.getenv("WEBINFO_NAABU_RATE", "500"))
     NAABU_PORTS = os.getenv("WEBINFO_NAABU_PORTS", "1-65535")  # 全端口
     NAABU_SCAN_TYPE = os.getenv("WEBINFO_NAABU_SCAN_TYPE", "s")  # SYN 扫描
     NAABU_HOST_DISCOVERY = os.getenv("WEBINFO_NAABU_HOST_DISCOVERY", "true")  # 主机存活检测
@@ -32,7 +32,7 @@ class Config:
     # CIDR 扩展扫描
     EXPAND_CIDR = os.getenv("WEBINFO_EXPAND_CIDR", "true").lower() == "true"  # 是否扩展到 C 段
     CIDR_PORTS = os.getenv("WEBINFO_CIDR_PORTS", "top-1000")  # C 段用 top-1000 端口
-    CIDR_RATE = int(os.getenv("WEBINFO_CIDR_RATE", "200"))  # C 段限速
+    CIDR_RATE = int(os.getenv("WEBINFO_CIDR_RATE", "100"))  # C 段限速更保守
 
     # 路径扫描
     PATH_EXTENSIONS = os.getenv("WEBINFO_PATH_EXT", "php,aspx,jsp")
