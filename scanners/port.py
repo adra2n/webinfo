@@ -74,30 +74,33 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
 
     start_time = time.time()
     found_count = 0
-    hosts_scanned = 0
+    hosts_with_ports = set()  # 记录已发现端口的主机
+    scanned_hosts = set()  # 记录已扫描的主机
+    
+    def _format_time(seconds):
+        """格式化时间"""
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}"
     
     def _print_progress():
         """打印进度条"""
         elapsed = time.time() - start_time
-        if hosts_scanned > 0 and elapsed > 0:
-            rate_actual = hosts_scanned / elapsed
-            remaining = target_count - hosts_scanned
+        scanned_count = len(scanned_hosts)
+        
+        if scanned_count > 0 and elapsed > 0:
+            rate_actual = scanned_count / elapsed
+            remaining = target_count - scanned_count
             eta = remaining / rate_actual if rate_actual > 0 else 0
-            
-            # 格式化时间
-            def _format_time(seconds):
-                hours = int(seconds // 3600)
-                minutes = int((seconds % 3600) // 60)
-                secs = int(seconds % 60)
-                return f"{hours:02d}:{minutes:02d}:{secs:02d}"
             
             # 计算进度条长度
             bar_length = 40
-            progress = hosts_scanned / target_count if target_count > 0 else 0
+            progress = scanned_count / target_count if target_count > 0 else 0
             filled = int(bar_length * progress)
             bar = "█" * filled + "░" * (bar_length - filled)
             
-            print(f"\r[ETA {_format_time(eta)}] |{bar}| {hosts_scanned}/{target_count} rate: {rate_actual:.0f} qps (time: {_format_time(elapsed)})", end="", flush=True)
+            print(f"\r[ETA {_format_time(eta)}] |{bar}| {scanned_count}/{target_count} rate: {rate_actual:.0f} qps (time: {_format_time(elapsed)}) found: {found_count} ports", end="", flush=True)
         else:
             print(f"\r[{label}] 准备中...", end="", flush=True)
 
@@ -106,17 +109,31 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
         if not line and proc.poll() is not None:
             break
         if line:
-            # 解析 naabu 的进度输出: "Found X ports on host xxx"
-            match = re.search(r"Found\s+(\d+)\s+ports?\s+on\s+host\s+(\S+)", line)
-            if match:
+            line = line.strip()
+            # 解析 naabu 输出的 host:port 格式 (如 "baidu.com:80")
+            host_port_match = re.match(r"^([^:]+):(\d+)$", line)
+            if host_port_match:
+                host = host_port_match.group(1)
                 found_count += 1
-                hosts_scanned += 1
+                if host not in scanned_hosts:
+                    scanned_hosts.add(host)
                 _print_progress()
+            # 解析 naabu 的进度输出: "Found X ports on host xxx"
+            elif "Found" in line and "ports" in line and "on host" in line:
+                found_match = re.search(r"Found\s+(\d+)\s+ports?\s+on\s+host\s+(\S+)", line)
+                if found_match:
+                    host = found_match.group(2)
+                    if host not in scanned_hosts:
+                        scanned_hosts.add(host)
+                    _print_progress()
             # 解析 banner 输出
             elif "projectdiscovery" in line or "naabu version" in line:
                 pass  # 跳过 banner
             elif "Running" in line or "Host discovery" in line:
                 pass  # 跳过启动信息
+            # 跳过其他 [INF] [WRN] 信息
+            elif line.startswith("[INF]") or line.startswith("[WRN]"):
+                pass
 
     print()  # 换行
     proc.wait()
