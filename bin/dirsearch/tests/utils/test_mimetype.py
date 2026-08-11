@@ -27,5 +27,22 @@ class TestMimeTypeUtils(TestCase):
     def test_is_xml(self):
         self.assertTrue(MimeTypeUtils.is_xml('<?xml version="1.0" encoding="UTF-8"?><foo>bar</foo>'), "Failed to detect XML mimetype")
 
+    def test_is_xml_rejects_dtd(self):
+        self.assertFalse(
+            MimeTypeUtils.is_xml(
+                '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>'
+            ),
+            "XML mimetype detection should reject entity declarations",
+        )
+
+    def test_is_xml_rejects_utf16_dtd(self):
+        payload = (
+            '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>'
+        ).encode("utf-16")
+        self.assertFalse(
+            MimeTypeUtils.is_xml(payload),
+            "XML mimetype detection should reject encoded entity declarations",
+        )
+
     def test_is_query_string(self):
         self.assertTrue(MimeTypeUtils.is_query_string("foo=1&bar=&foobar=2"), "Failed to detect query string")

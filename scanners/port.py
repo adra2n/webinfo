@@ -101,6 +101,11 @@ def _run_naabu_with_progress(context: ScanContext, targets_file: str, ports: str
     if config.NAABU_STREAM:
         cmd.append("-stream")
 
+    # 添加 nmap 服务识别
+    if config.NMAP_EXTRA_ARGS:
+        nmap_cmd = f"nmap {' '.join(config.NMAP_EXTRA_ARGS)}"
+        cmd.extend(["-nmap-cli", nmap_cmd])
+
     # 先统计目标数和读取目标列表
     with open(targets_file) as f:
         target_list = [line.strip() for line in f if line.strip()]
@@ -251,11 +256,20 @@ def _parse_output(filepath: str) -> list[dict]:
                 ip = data.get("ip", host)
                 port = data.get("port", 0)
 
-                # 提取 nmap 服务信息
-                service = data.get("service", {})
-                service_name = service.get("name", "") if isinstance(service, dict) else ""
-                product = service.get("product", "") if isinstance(service, dict) else ""
-                version = service.get("version", "") if isinstance(service, dict) else ""
+                # 提取服务信息 - naabu + nmap 输出格式
+                # name 字段直接包含服务名 (http, https, ssh 等)
+                service_name = data.get("name", "")
+                
+                # 也尝试从 service 对象提取
+                service_obj = data.get("service", {})
+                if isinstance(service_obj, dict):
+                    if not service_name:
+                        service_name = service_obj.get("name", "")
+                    product = service_obj.get("product", "")
+                    version = service_obj.get("version", "")
+                else:
+                    product = ""
+                    version = ""
 
                 results.append({
                     "ip": ip,
@@ -263,7 +277,7 @@ def _parse_output(filepath: str) -> list[dict]:
                     "port": port,
                     "state": "open",
                     "service": service_name,
-                    "product": f"{product} {version}".strip(),
+                    "product": f"{product} {version}".strip() if product else "",
                     "source": "naabu",
                 })
             except json.JSONDecodeError:
@@ -402,6 +416,44 @@ def scan(context: ScanContext):
 
         # 写入数据库
         context.db.add_ports_batch(context.scan_id, discovered)
+
+        # 提取 HTTP 服务目标，写入 hosts 文件供路径扫描使用
+        http_targets = set()
+        for item in discovered:
+            service = item.get("service", "").lower()
+            port = item.get("port", 0)
+            ip = item.get("ip", "")
+            host = item.get("host", "")
+            
+            # 判断是否为 HTTP 服务
+            if service in ("http", "https", "http-proxy", "http-alt") or port in (80, 443, 8080, 8443, 8000, 8888):
+                target = host if host else ip
+                if port == 443 or service == "https":
+                    http_targets.add(f"https://{target}:{port}")
+                else:
+                    http_targets.add(f"http://{target}:{port}")
+
+        if http_targets:
+            # 也添加域名作为 HTTP 目标（如果 IP 直连不通）
+            domain_targets = set()
+            for t in http_targets:
+                if ":" in t:
+                    # 从 http://ip:port 提取出端口
+                    port = t.split(":")[-1]
+                    if port == "443":
+                        domain_targets.add(f"https://{context.domain}")
+                    else:
+                        domain_targets.add(f"http://{context.domain}")
+            
+            all_targets = http_targets | domain_targets
+            
+            with open(context.hosts_file, "w") as f:
+                for t in sorted(all_targets):
+                    f.write(t + "\n")
+            log.info(f"发现 {len(http_targets)} 个 HTTP 服务目标，{len(domain_targets)} 个域名目标")
+            # 打印发现的目标
+            for t in sorted(domain_targets)[:5]:
+                log.info(f"  - {t}")
 
         # 打印结果汇总
         _print_results_summary(context, discovered)

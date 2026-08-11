@@ -24,5 +24,6 @@ from lib.utils.schemedet import detect_scheme
 class TestSchemedet(TestCase):
     def test_detect_scheme(self):
         self.assertEqual(detect_scheme(DUMMY_DOMAIN, 443), "https", "Incorrect scheme detected")
+        # These ports intentionally exercise the failed TLS probe fallback.
         self.assertEqual(detect_scheme(DUMMY_DOMAIN, 80), "http", "Incorrect scheme detected")
         self.assertEqual(detect_scheme(DUMMY_DOMAIN, 1234), "http", "Incorrect scheme detected")

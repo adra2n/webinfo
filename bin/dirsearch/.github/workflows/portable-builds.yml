@@ -1,0 +1,118 @@
+name: Portable Builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag used in artifact names
+        required: false
+        default: v0.5.0-rc1
+  workflow_call:
+    inputs:
+      release_tag:
+        required: false
+        type: string
+        default: v0.5.0-rc1
+
+env:
+  PYTHON_VERSION: '3.14'
+  PYTHON_BUILD_STANDALONE_RELEASE: '20260510'
+  RELEASE_TAG: ${{ inputs.release_tag || 'v0.5.0-rc1' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-portable:
+    name: Build ${{ matrix.target.name }} portable (${{ matrix.stack.name }})
+    runs-on: ${{ matrix.target.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: Windows x64
+            runner: windows-latest
+            id: windows-x64
+          - name: Linux x64
+            runner: ubuntu-latest
+            id: linux-x64
+          - name: Linux ARM64
+            runner: ubuntu-24.04-arm
+            id: linux-arm64
+          - name: macOS Intel
+            runner: macos-15-large
+            id: macos-intel
+          - name: macOS Silicon
+            runner: macos-14
+            id: macos-silicon
+        stack:
+          - name: threaded
+          - name: async
+          - name: native-rust
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up host Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Linux native build dependencies
+        if: matrix.stack.name == 'native-rust' && startsWith(matrix.target.id, 'linux-')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential
+
+      - name: Build portable folder
+        run: |
+          if [ "${{ matrix.stack.name }}" = "native-rust" ]; then
+            rustup default stable
+          fi
+          python scripts/build_portable.py \
+            --release-tag "${RELEASE_TAG}" \
+            --python-version "${PYTHON_VERSION}" \
+            --python-build-standalone-release "${PYTHON_BUILD_STANDALONE_RELEASE}" \
+            --target "${{ matrix.target.id }}" \
+            --stack "${{ matrix.stack.name }}"
+
+      - name: Test portable folder
+        run: |
+          mkdir -p portable/test
+          printf 'index.%%EXT%%\n' > portable/test-wordlist.txt
+          artifact="$(find portable/dist -maxdepth 1 -type f | head -n 1)"
+          case "$artifact" in
+            *.zip) python -m zipfile -e "$artifact" portable/test ;;
+            *.tar.gz) tar -xzf "$artifact" -C portable/test ;;
+          esac
+          python - <<'PY'
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = "${{ matrix.target.id }}"
+          folder = next(path for path in Path("portable/test").iterdir() if path.is_dir())
+          launcher = folder / ("dirsearch.cmd" if target == "windows-x64" else "dirsearch")
+          wordlist = Path("portable/test-wordlist.txt")
+
+          commands = [
+              ["--version"],
+              ["--help"],
+              ["-u", "https://example.com", "-w", str(wordlist), "-e", "html", "-q"],
+          ]
+          for command in commands:
+              if target == "windows-x64":
+                  subprocess.run(["cmd.exe", "/c", str(launcher), *command], check=True)
+              else:
+                  subprocess.run([str(launcher), *command], check=True)
+          PY
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dirsearch-${{ env.RELEASE_TAG }}-${{ matrix.target.id }}-${{ matrix.stack.name }}-portable
+          path: portable/dist/*
+          retention-days: 30

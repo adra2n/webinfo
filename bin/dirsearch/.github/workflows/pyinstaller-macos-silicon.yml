@@ -1,0 +1,79 @@
+name: PyInstaller macOS Silicon
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag used in artifact names
+        required: false
+        default: v0.5.0-rc1
+  workflow_call:
+    inputs:
+      release_tag:
+        required: false
+        type: string
+        default: v0.5.0-rc1
+
+env:
+  PYTHON_VERSION: '3.14'
+  PYINSTALLER_VERSION: '6.20.0'
+  RELEASE_TAG: ${{ inputs.release_tag || 'v0.5.0-rc1' }}
+
+jobs:
+  build-macos-silicon:
+    name: Build macOS Silicon (${{ matrix.stack.name }})
+    runs-on: macos-14
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - name: threaded
+          - name: async
+          - name: native-rust
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --only-binary=:all: -r requirements.txt -r requirements/db.txt
+          python -m pip install pyinstaller==${{ env.PYINSTALLER_VERSION }}
+
+      - name: Configure default stack
+        run: python scripts/configure_stack.py config.ini ${{ matrix.stack.name }}
+
+      - name: Build native Rust extension
+        if: matrix.stack.name == 'native-rust'
+        run: |
+          rustup default stable
+          python -m pip install --only-binary=:all: maturin
+          python scripts/build_native.py --out dist/native-wheels
+
+      - name: Build macOS Silicon binary
+        run: python -m PyInstaller --clean pyinstaller/dirsearch.spec
+
+      - name: Rename binary
+        run: |
+          mv dist/dirsearch "dist/dirsearch-${RELEASE_TAG}-macos-silicon-${{ matrix.stack.name }}"
+
+      - name: Test macOS Silicon binary
+        run: |
+          "./dist/dirsearch-${RELEASE_TAG}-macos-silicon-${{ matrix.stack.name }}" --version
+          "./dist/dirsearch-${RELEASE_TAG}-macos-silicon-${{ matrix.stack.name }}" --help
+          "./dist/dirsearch-${RELEASE_TAG}-macos-silicon-${{ matrix.stack.name }}" -u https://example.com -w tests/static/wordlist.txt -e html -q
+
+      - name: Upload macOS Silicon artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dirsearch-${{ env.RELEASE_TAG }}-macos-silicon-${{ matrix.stack.name }}
+          path: dist/dirsearch-${{ env.RELEASE_TAG }}-macos-silicon-${{ matrix.stack.name }}
+          retention-days: 30

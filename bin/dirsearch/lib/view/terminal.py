@@ -17,14 +17,14 @@
 #  Author: Mauro Soria
 
 import sys
-import time
 import shutil
+import unicodedata
 
 from lib.core.data import options
 from lib.core.decorators import locked
 from lib.core.settings import IS_WINDOWS
-from lib.utils.common import human_size
 from lib.view.colors import set_color, clean_color, disable_color
+
 
 if IS_WINDOWS:
     from colorama.win32 import (
@@ -34,7 +34,24 @@ if IS_WINDOWS:
     )
 
 
-class Output:
+MAX_DISPLAY_TEXT_LENGTH = 240
+
+
+def safe_display_text(value, max_length=MAX_DISPLAY_TEXT_LENGTH):
+    text = str(value)
+    text = "".join(
+        character
+        for character in text
+        if not unicodedata.category(character).startswith("C")
+    )
+
+    if len(text) > max_length:
+        return text[:max_length - 3] + "..."
+
+    return text
+
+
+class CLI:
     def __init__(self):
         self.last_in_line = False
         self.buffer = ""
@@ -88,30 +105,34 @@ class Output:
             self.buffer += "\n"
 
     def status_report(self, response, full_url):
-        status = response.status
-        length = human_size(response.length)
-        target = response.url if full_url else "/" + response.full_path
-        current_time = time.strftime("%H:%M:%S")
-        message = f"[{current_time}] {status} - {length.rjust(6, ' ')} - {target}"
+        target = safe_display_text(response.url if full_url else "/" + response.full_path)
+        # Get time from datetime string
+        time = response.datetime.split()[1]
+        message = f"[{time}] {response.status} - {response.size.rjust(6, ' ')} - {target}"
 
-        if status in (200, 201, 204):
+        if options["verbose"]:
+            elapsed_ms = int(response.elapsed * 1000) if response.elapsed else 0
+            content_type = response.type
+            message += f"  ({elapsed_ms}ms, {content_type})"
+
+        if response.status in (200, 201, 204):
             message = set_color(message, fore="green")
-        elif status == 401:
+        elif response.status == 401:
             message = set_color(message, fore="yellow")
-        elif status == 403:
+        elif response.status == 403:
             message = set_color(message, fore="blue")
-        elif status in range(500, 600):
+        elif response.status in range(500, 600):
             message = set_color(message, fore="red")
-        elif status in range(300, 400):
+        elif response.status in range(300, 400):
             message = set_color(message, fore="cyan")
         else:
             message = set_color(message, fore="magenta")
 
         if response.redirect:
-            message += f"  ->  {response.redirect}"
+            message += f"  ->  {safe_display_text(response.redirect)}"
 
         for redirect in response.history:
-            message += f"\n-->  {redirect}"
+            message += f"\n-->  {safe_display_text(redirect)}"
 
         self.new_line(message)
 
@@ -139,7 +160,9 @@ class Output:
 
     def new_directories(self, directories):
         message = set_color(
-            f"Added to the queue: {', '.join(directories)}", fore="yellow", style="dim"
+            f"Added to the queue: {safe_display_text(', '.join(directories))}",
+            fore="yellow",
+            style="dim",
         )
         self.new_line(message)
 
@@ -197,14 +220,11 @@ class Output:
         self.new_line()
         self.print_header({"Target": target})
 
-    def output_file(self, file):
-        self.new_line(f"\nOutput File: {file}")
-
     def log_file(self, file):
         self.new_line(f"\nLog File: {file}")
 
 
-class QuietOutput(Output):
+class QuietCLI(CLI):
     def status_report(self, response, full_url):
         super().status_report(response, True)
 
@@ -226,11 +246,16 @@ class QuietOutput(Output):
     def target(*args):
         pass
 
-    def output_file(*args):
-        pass
-
     def log_file(*args):
         pass
 
 
-output = QuietOutput() if options["quiet"] else Output()
+class EmptyCLI(QuietCLI):
+    def status_report(*args):
+        pass
+
+    def error(*args):
+        pass
+
+
+interface = EmptyCLI() if options["disable_cli"] else QuietCLI() if options["quiet"] else CLI()

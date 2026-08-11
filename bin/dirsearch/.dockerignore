@@ -1,0 +1,16 @@
+.git
+.github
+.cache
+.venv
+build
+dist
+portable
+pyinstaller/dist
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache
+sessions
+tests
+native/target

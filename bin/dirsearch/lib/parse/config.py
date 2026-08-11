@@ -16,53 +16,97 @@
 #
 #  Author: Mauro Soria
 
+from __future__ import annotations
+
 import configparser
+import json
 
 
 class ConfigParser(configparser.ConfigParser):
-    def __init__(self):
-        configparser.ConfigParser.__init__(self)
-
-    def safe_get(self, section, option, default=None, allowed=None):
+    def safe_get(
+        self,
+        section: str,
+        option: str,
+        default: str | None = None,
+        allowed: tuple[str, ...] | None = None,
+    ) -> str | None:
         try:
-            result = configparser.ConfigParser.get(self, section, option)
+            value = super().get(section, option)
 
-            if allowed is not None:
-                return result if result in allowed else default
+            if allowed and value not in allowed:
+                return default
 
-            return result
+            return value
         except (configparser.NoSectionError, configparser.NoOptionError):
             return default
 
-    def safe_getfloat(self, section, option, default=0, allowed=None):
+    def safe_getfloat(
+        self,
+        section: str,
+        option: str,
+        default: float = 0.0,
+        allowed: tuple[float, ...] | None = None,
+    ) -> float:
         try:
-            result = configparser.ConfigParser.getfloat(self, section, option)
+            value = super().getfloat(section, option)
 
-            if allowed is not None:
-                return result if result in allowed else default
+            if allowed and value not in allowed:
+                return default
 
-            return result
+            return value
         except (configparser.NoSectionError, configparser.NoOptionError):
             return default
 
-    def safe_getboolean(self, section, option, default=False, allowed=None):
+    def safe_getboolean(
+        self,
+        section: str,
+        option: str,
+        default: bool = False,
+        allowed: tuple[bool, ...] | None = None,
+    ) -> bool:
         try:
-            result = configparser.ConfigParser.getboolean(self, section, option)
+            value = super().getboolean(section, option)
 
-            if allowed is not None:
-                return result if result in allowed else default
+            if allowed and value not in allowed:
+                return default
 
-            return result
+            return value
         except (configparser.NoSectionError, configparser.NoOptionError):
             return default
 
-    def safe_getint(self, section, option, default=0, allowed=None):
+    def safe_getint(
+        self,
+        section: str,
+        option: str,
+        default: int = 0,
+        allowed: tuple[int, ...] | None = None,
+    ) -> int:
         try:
-            result = configparser.ConfigParser.getint(self, section, option)
+            value = super().getint(section, option)
 
-            if allowed is not None:
-                return result if result in allowed else default
+            if allowed and value not in allowed:
+                return default
 
-            return result
+            return value
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return default
+
+    def safe_getlist(
+        self,
+        section: str,
+        option: str,
+        default: list[str] = [],
+        allowed: tuple[str, ...] | None = None,
+    ) -> list[str]:
+        try:
+            try:
+                value = json.loads(super().get(section, option))
+            except json.decoder.JSONDecodeError:
+                value = [super().get(section, option)]
+
+            if allowed and set(value) - set(allowed):
+                return default
+
+            return value
         except (configparser.NoSectionError, configparser.NoOptionError):
             return default

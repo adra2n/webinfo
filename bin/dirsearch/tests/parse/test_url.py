@@ -19,7 +19,7 @@
 from unittest import TestCase
 
 from lib.core.settings import DUMMY_URL
-from lib.parse.url import clean_path, parse_path
+from lib.parse.url import append_query_string, clean_path, ensure_trailing_path_slash, parse_path
 
 
 class TestURLParsers(TestCase):
@@ -40,4 +40,17 @@ class TestURLParsers(TestCase):
             parse_path(f"{DUMMY_URL}foo/bar"),
             "foo/bar",
             "Path parser gives unexpected result",
+        )
+
+    def test_ensure_trailing_path_slash_preserves_query(self):
+        self.assertEqual(
+            ensure_trailing_path_slash("https://example.com/admin?debug=true"),
+            "https://example.com/admin/?debug=true",
+        )
+
+    def test_append_query_string(self):
+        self.assertEqual(append_query_string("admin", "debug=true"), "admin?debug=true")
+        self.assertEqual(
+            append_query_string("admin?existing=true", "debug=true"),
+            "admin?existing=true",
         )

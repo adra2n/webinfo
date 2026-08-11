@@ -1,0 +1,17 @@
+/reports/
+__pycache__/
+*.py[cod]
+*.py.save
+*$py.class
+.idea/
+.ropeproject/
+venv/
+.venv/
+.cache/
+build/
+dist/
+portable/
+pyinstaller/dist/
+/dirsearch.spec
+sessions/*
+!sessions/.gitkeep

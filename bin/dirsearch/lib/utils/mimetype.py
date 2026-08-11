@@ -19,12 +19,18 @@
 import re
 import json
 
-from defusedxml import ElementTree
-
 from lib.core.settings import QUERY_STRING_REGEX
+from lib.utils import safe_xml
 
 
 class MimeTypeUtils:
+    @staticmethod
+    def to_text(content):
+        if isinstance(content, bytes):
+            return content.decode("utf-8", errors="replace")
+
+        return content
+
     @staticmethod
     def is_json(content):
         try:
@@ -36,22 +42,21 @@ class MimeTypeUtils:
     @staticmethod
     def is_xml(content):
         try:
-            ElementTree.fromstring(content)
+            safe_xml.fromstring(content)
             return True
-        except ElementTree.ParseError:
+        except (safe_xml.ParseError, safe_xml.UnsafeXML):
             return False
-        except Exception:
-            return True
 
     @staticmethod
     def is_query_string(content):
+        content = MimeTypeUtils.to_text(content)
         if re.match(QUERY_STRING_REGEX, content):
             return True
 
         return False
 
 
-def guess_mimetype(content):
+def guess_mimetype(content) -> str:
     if MimeTypeUtils.is_json(content):
         return "application/json"
     elif MimeTypeUtils.is_xml(content):

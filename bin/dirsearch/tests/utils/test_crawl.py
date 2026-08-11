@@ -31,11 +31,28 @@ class TestCrawl(TestCase):
         html_doc = f'<a href="{DUMMY_URL}foo">link</a><script src="/bar.js"><img src="/bar.png">'
         self.assertEqual(Crawler.html_crawl(DUMMY_URL, DUMMY_URL, html_doc), {"foo", "bar.js"})
 
+    def test_html_crawl_handles_rtl_override(self):
+        html_doc = '<a href="/admin/\u202eexe.txt/">link</a>'
+
+        self.assertEqual(
+            Crawler.html_crawl(DUMMY_URL, DUMMY_URL, html_doc),
+            {"admin/\u202eexe.txt/"},
+        )
+
+    def test_html_crawl_handles_large_zwj_emoji_sequence(self):
+        family = "👨‍👩‍👧‍👦" * 500
+        html_doc = f'<a href="/admin/{family}/ok">link</a>'
+
+        self.assertEqual(
+            Crawler.html_crawl(DUMMY_URL, DUMMY_URL, html_doc),
+            {f"admin/{family}/ok"},
+        )
+
     def test_robots_crawl(self):
         robots_txt = """
 User-agent: Googlebot
 Disallow: /path1
 
 User-agent: *
-Allow: /path2"""
+        Allow: /path2"""
         self.assertEqual(Crawler.robots_crawl(DUMMY_URL, DUMMY_URL, robots_txt), {"path1", "path2"})

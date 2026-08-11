@@ -16,21 +16,46 @@
 #
 #  Author: Mauro Soria
 
+import os
+import sys
+import re
+
+from functools import reduce
+from json import dumps
+from html import escape
 from ipaddress import IPv4Network, IPv6Network
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, unquote, urljoin
 
 from lib.core.settings import (
-    INVALID_CHARS_FOR_WINDOWS_FILENAME, INSECURE_CSV_CHARS,
-    INVALID_FILENAME_CHAR_REPLACEMENT, URL_SAFE_CHARS, TEXT_CHARS,
+    INVALID_CHARS_FOR_WINDOWS_FILENAME,
+    INVALID_FILENAME_CHAR_REPLACEMENT,
+    IS_WINDOWS,
+    URL_SAFE_CHARS,
+    SCRIPT_PATH,
+    TEXT_CHARS,
 )
+from lib.utils.file import FileUtils
 
 
-def safequote(string_):
+def get_config_file():
+    return os.environ.get("DIRSEARCH_CONFIG") or FileUtils.build_path(SCRIPT_PATH, "config.ini")
+
+
+def safequote(string_: str) -> str:
     return quote(string_, safe=URL_SAFE_CHARS)
 
 
-def uniq(array, type_=list):
-    return type_(filter(None, dict.fromkeys(array)))
+def _strip_and_uniquify_callback(array, item):
+    item = item.strip()
+    if not item or item in array:
+        return array
+
+    return array + [item]
+
+
+# Strip values and remove duplicates from a list, respect the order
+def strip_and_uniquify(array, type_=list):
+    return type_(reduce(_strip_and_uniquify_callback, array, []))
 
 
 def lstrip_once(string, pattern):
@@ -55,17 +80,20 @@ def get_valid_filename(string):
     return string
 
 
-def human_size(num):
+def get_readable_size(num):
     base = 1024
-    for unit in ["B ", "KB", "MB", "GB"]:
+    units = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+
+    for unit in units:
         if -base < num < base:
             return f"{num}{unit}"
+
         num = round(num / base)
 
     return f"{num}TB"
 
 
-def is_binary(bytes):
+def is_binary(bytes) -> bool:
     return bool(bytes.translate(None, TEXT_CHARS))
 
 
@@ -81,14 +109,6 @@ def iprange(subnet):
     return [str(ip) for ip in network]
 
 
-# Prevent CSV injection. Reference: https://www.exploit-db.com/exploits/49370
-def escape_csv(text):
-    if text.startswith(INSECURE_CSV_CHARS):
-        text = "'" + text
-
-    return text.replace('"', '""')
-
-
 # The browser direction behavior when you click on <a href="bar">link</a>
 # (https://website.com/folder/foo -> https://website.com/folder/bar)
 def merge_path(url, path):
@@ -98,3 +118,43 @@ def merge_path(url, path):
     parts[-1] = path
 
     return "/".join(parts)
+
+
+# Reference: https://stackoverflow.com/questions/46129898/conflict-between-sys-stdin-and-input-eoferror-eof-when-reading-a-line
+def read_stdin():
+    buffer = sys.stdin.read()
+
+    try:
+        if IS_WINDOWS:
+            tty = "CON:"
+        else:
+            tty = os.ttyname(sys.stdout.fileno())
+
+        sys.stdin = open(tty)
+    except OSError:
+        pass
+
+    return buffer
+
+
+# Replace a path from an HTML body, where the path might be encoded/decoded
+# in many different ways (URL encoding, HTML escaping, ...).
+#
+# Note:
+# - :path: argument must not start with an "/".
+# - The path in the body followed by an alphanumeric character won't
+# be replaced. For example, "abc" will be replaced from "abc def" but
+# not "abcdef".
+def replace_path(string, path, replace_with):
+    def sub(string, to_replace, replace_with):
+        regex = re.escape(to_replace) + "(?=[^\\w]|$)"
+        return re.sub(regex, replace_with, string)
+
+    path = "/" + path
+    string = sub(string, quote(path), replace_with)
+    string = sub(string, quote(quote(path)), replace_with)
+    string = sub(string, unquote(path), replace_with)
+    string = sub(string, unquote(unquote(path)), replace_with)
+    string = sub(string, escape(path), replace_with)
+    string = sub(string, dumps(path), replace_with)
+    return sub(string, path, replace_with)

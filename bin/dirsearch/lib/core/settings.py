@@ -19,20 +19,75 @@
 import os
 import sys
 import string
+import time
 
 from lib.utils.file import FileUtils
 
 # Version format: <major version>.<minor version>.<revision>[.<month>]
-VERSION = "0.4.2.8"
+VERSION = "0.5.0"
 
 BANNER = f"""
   _|. _ _  _  _  _ _|_    v{VERSION}
  (_||| _) (/_(_|| (_| )
 """
 
+COMMAND = " ".join(sys.argv)
+
+START_TIME = time.strftime("%Y-%m-%d %H:%M:%S")
+
 SCRIPT_PATH = FileUtils.parent(__file__, 3)
 
 IS_WINDOWS = sys.platform in ("win32", "msys")
+
+WORDLIST_CATEGORY_DIR = FileUtils.build_path(SCRIPT_PATH, "db", "categories")
+WORDLIST_CATEGORIES = {
+    "extensions": "extensions.txt",
+    "conf": "conf.txt",
+    "vcs": "vcs.txt",
+    "backups": "backups.txt",
+    "db": "db.txt",
+    "logs": "logs.txt",
+    "keys": "keys.txt",
+    "web": "web.txt",
+    "common": "common.txt",
+
+    # PHP
+    "php/laravel": "php/laravel.txt",
+    "php/wordpress": "php/wordpress.txt",
+    "php/codeigniter": "php/codeigniter.txt",
+    "php/symfony": "php/symfony.txt",
+    "php/yii": "php/yii.txt",
+    "php/cakephp": "php/cakephp.txt",
+    "php/joomla": "php/joomla.txt",
+    "php/drupal": "php/drupal.txt",
+    "php/magento": "php/magento.txt",
+
+    # .NET
+    "dotnet/aspx": "dotnet/aspx.txt",
+    "dotnet/mvc": "dotnet/mvc.txt",
+    "dotnet/core": "dotnet/core.txt",
+
+    # ColdFusion
+    "coldfusion": "coldfusion/coldfusion.txt",
+
+    # Java
+    "java/jsp": "java/jsp.txt",
+    "java/jsf": "java/jsf.txt",
+    "java/spring": "java/spring.txt",
+
+    # Python
+    "python/django": "python/django.txt",
+    "python/flask": "python/flask.txt",
+    "python/fastapi": "python/fastapi.txt",
+
+    # Node
+    "node/express": "node/express.txt",
+
+    # Infra
+    "infra/docker": "infra/docker.txt",
+    "infra/k8s": "infra/k8s.txt",
+    "infra/aws": "infra/aws.txt",
+}
 
 DEFAULT_ENCODING = "utf-8"
 
@@ -42,7 +97,7 @@ INVALID_CHARS_FOR_WINDOWS_FILENAME = ('"', "*", "<", ">", "?", "\\", "|", "/", "
 
 INVALID_FILENAME_CHAR_REPLACEMENT = "_"
 
-OUTPUT_FORMATS = ("simple", "plain", "json", "xml", "md", "csv", "html", "sqlite")
+FILE_BASED_OUTPUT_FORMATS = ("simple", "plain", "json", "xml", "md", "csv", "html", "sqlite")
 
 COMMON_EXTENSIONS = ("php", "jsp", "asp", "aspx", "do", "action", "cgi", "html", "htm", "js", "tar.gz")
 
@@ -54,29 +109,40 @@ CRAWL_ATTRIBUTES = ("action", "cite", "data", "formaction", "href", "longdesc", 
 
 CRAWL_TAGS = ("a", "area", "base", "blockquote", "button", "embed", "form", "frame", "frameset", "html", "iframe", "input", "ins", "noframes", "object", "q", "script", "source")
 
-AUTHENTICATION_TYPES = ("basic", "digest", "bearer", "ntlm", "jwt", "oauth2")
+AUTHENTICATION_TYPES = ("basic", "digest", "bearer", "ntlm", "jwt")
 
 PROXY_SCHEMES = ("http://", "https://", "socks5://", "socks5h://", "socks4://", "socks4a://")
 
 STANDARD_PORTS = {"http": 80, "https": 443}
 
-INSECURE_CSV_CHARS = ("+", "-", "=", "@")
+DEFAULT_TEST_PREFIXES = (".", ".ht")
 
-DEFAULT_TEST_PREFIXES = (".",)
-
-DEFAULT_TEST_SUFFIXES = ("/",)
+DEFAULT_TEST_SUFFIXES = ("/", "~")
 
 DEFAULT_TOR_PROXIES = ("socks5://127.0.0.1:9050", "socks5://127.0.0.1:9150")
 
 DEFAULT_HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     "accept": "*/*",
-    "accept-rncoding": "*",
+    "accept-encoding": "*",
     "keep-alive": "timeout=15, max=1000",
     "cache-control": "max-age=0",
 }
 
-DEFAULT_SESSION_FILE = "session.pickle"
+
+def _get_default_session_dir() -> str:
+    if getattr(sys, "frozen", False) or hasattr(sys, "_MEIPASS"):
+        home_dir = os.path.expanduser("~")
+        return FileUtils.build_path(home_dir, ".dirsearch", "sessions")
+    return FileUtils.build_path(SCRIPT_PATH, "sessions")
+
+
+DEFAULT_SESSION_DIR = _get_default_session_dir()
+DEFAULT_SESSION_FILE = FileUtils.build_path(
+    DEFAULT_SESSION_DIR,
+    "{date}",
+    "session_{datetime}",
+)
 
 REFLECTED_PATH_MARKER = "__REFLECTED_PATH__"
 
@@ -104,11 +170,11 @@ DUMMY_URL = "https://example.com/"
 
 DUMMY_WORD = "dummyasdf"
 
+DB_CONNECTION_TIMEOUT = 45
+
 SOCKET_TIMEOUT = 6
 
 RATE_UPDATE_DELAY = 0.15
-
-MAX_MATCH_RATIO = 0.98
 
 ITER_CHUNK_SIZE = 1024 * 1024
 
@@ -118,7 +184,11 @@ TEST_PATH_LENGTH = 6
 
 MAX_CONSECUTIVE_REQUEST_ERRORS = 75
 
-PAUSING_WAIT_TIMEOUT = 7
+# Signal handling settings for PyInstaller Linux builds
+# Time window (seconds) for detecting rapid consecutive Ctrl+C presses
+SIGINT_WINDOW_SECONDS = 0.8
+# Number of rapid Ctrl+C presses required to force quit
+SIGINT_FORCE_QUIT_THRESHOLD = 3
 
 URL_SAFE_CHARS = string.punctuation
 

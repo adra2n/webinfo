@@ -1,0 +1,114 @@
+name: v0.5.0 Prerelease
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag for the prerelease
+        required: true
+        default: v0.5.0-rc1
+      target_commitish:
+        description: Branch or commit for the tag
+        required: false
+        default: master
+      prerelease:
+        description: Mark as prerelease
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pyinstaller-linux:
+    uses: ./.github/workflows/pyinstaller-linux.yml
+    with:
+      release_tag: ${{ inputs.tag }}
+
+  pyinstaller-windows:
+    uses: ./.github/workflows/pyinstaller-windows.yml
+    with:
+      release_tag: ${{ inputs.tag }}
+
+  pyinstaller-macos-intel:
+    uses: ./.github/workflows/pyinstaller-macos-intel.yml
+    with:
+      release_tag: ${{ inputs.tag }}
+
+  pyinstaller-macos-silicon:
+    uses: ./.github/workflows/pyinstaller-macos-silicon.yml
+    with:
+      release_tag: ${{ inputs.tag }}
+
+  portable-builds:
+    uses: ./.github/workflows/portable-builds.yml
+    with:
+      release_tag: ${{ inputs.tag }}
+
+  docker-images:
+    uses: ./.github/workflows/docker-image.yml
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
+    with:
+      release_tag: ${{ inputs.tag }}
+      push: true
+
+  prepare-artifacts:
+    name: Prepare Release Assets
+    needs:
+      - pyinstaller-linux
+      - pyinstaller-windows
+      - pyinstaller-macos-intel
+      - pyinstaller-macos-silicon
+      - portable-builds
+      - docker-images
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          find artifacts -maxdepth 3 -type f -exec cp {} release/ \;
+          cd release
+          sha256sum ./* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload combined artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dirsearch-${{ inputs.tag }}-release-assets
+          path: release/
+          retention-days: 30
+
+  release:
+    name: Draft GitHub Prerelease
+    needs: [prepare-artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download combined artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dirsearch-${{ inputs.tag }}-release-assets
+          path: release
+
+      - name: Create draft prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          body_path: docs/release-notes-v0.5.0.md
+          draft: true
+          prerelease: ${{ inputs.prerelease }}
+          tag_name: ${{ inputs.tag }}
+          target_commitish: ${{ inputs.target_commitish }}

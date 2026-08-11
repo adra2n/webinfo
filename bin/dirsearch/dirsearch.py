@@ -20,36 +20,57 @@
 
 import sys
 
-from pkg_resources import DistributionNotFound, VersionConflict
-
+from lib.core.api import (
+    DirsearchFuzzer,
+    FuzzerConfig,
+    FuzzerResult,
+    Wordlist,
+    WordlistState,
+    WordlistTemplate,
+)
 from lib.core.data import options
-from lib.core.exceptions import FailedDependenciesInstallation
-from lib.core.installation import check_dependencies, install_dependencies
+from lib.core.exceptions import WordlistLimitError
+from lib.core.options import parse_options
 
-if sys.version_info < (3, 7):
-    sys.stdout.write("Sorry, dirsearch requires Python 3.7 or higher\n")
+__all__ = [
+    "main",
+    "DirsearchFuzzer",
+    "FuzzerConfig",
+    "FuzzerResult",
+    "Wordlist",
+    "WordlistState",
+    "WordlistTemplate",
+]
+
+if sys.version_info < (3, 11):
+    sys.stderr.write("Sorry, dirsearch requires Python 3.11 or higher\n")
     sys.exit(1)
-
-try:
-    check_dependencies()
-except (DistributionNotFound, VersionConflict):
-    option = input("Missing required dependencies to run.\n"
-                   "Do you want dirsearch to automatically install them? [Y/n] ")
-
-    if option.lower() == 'y':
-        print("Installing required dependencies...")
-
-        try:
-            install_dependencies()
-        except FailedDependenciesInstallation:
-            print("Failed to install dirsearch dependencies, try doing it manually.")
-            exit(1)
 
 
 def main():
-    from lib.core.options import parse_options
-
     options.update(parse_options())
+
+    if options["wordlist_status"]:
+        from lib.core.dictionary import Dictionary
+
+        try:
+            dictionary = Dictionary(files=options["wordlists"])
+        except WordlistLimitError as error:
+            print(str(error))
+            sys.exit(1)
+
+        print("Wordlist status")
+        print(f"Files: {len(options['wordlists'])}")
+        for wordlist in options["wordlists"]:
+            print(f"- {wordlist}")
+        print(f"Generated entries: {len(dictionary)}")
+        print(f"Generation limit: {options['wordlist_max_size']}")
+        sys.exit(0)
+
+    if options["session_file"]:
+        print("Loading a session file will override current options.")
+        if input("[c]ontinue / [q]uit: ") != "c":
+            exit(1)
 
     from lib.controller.controller import Controller
 
@@ -57,4 +78,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

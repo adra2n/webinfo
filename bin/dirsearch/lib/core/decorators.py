@@ -16,24 +16,29 @@
 #
 #  Author: Mauro Soria
 
+from __future__ import annotations
+
 import threading
 
 from functools import wraps
 from time import time
+from typing import Any, Callable, TypeVar, cast
 
 _lock = threading.Lock()
-_cache = {}
+_cache: dict[int, tuple[float, Any]] = {}
 _cache_lock = threading.Lock()
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def cached(timeout=100):
-    def _cached(func):
+
+def cached(timeout: int | float = 100) -> Callable[[F], F]:
+    def _cached(func: F) -> F:
         @wraps(func)
-        def with_caching(*args, **kwargs):
+        def with_caching(*args: Any, **kwargs: Any) -> Any:
             key = id(func)
             for arg in args:
                 key += id(arg)
-            for k, v in kwargs:
+            for k, v in kwargs.items():
                 key += id(k) + id(v)
 
             # If it was cached and the cache timeout hasn't been reached
@@ -46,14 +51,14 @@ def cached(timeout=100):
 
             return result
 
-        return with_caching
+        return cast(F, with_caching)
 
     return _cached
 
 
-def locked(func):
-    def with_locking(*args, **kwargs):
+def locked(func: F) -> F:
+    def with_locking(*args: Any, **kwargs: Any) -> Any:
         with _lock:
             return func(*args, **kwargs)
 
-    return with_locking
+    return cast(F, with_locking)

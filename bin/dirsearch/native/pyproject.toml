@@ -1,0 +1,17 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "dirsearch-native"
+version = "0.1.0"
+description = "Rust native backend for dirsearch"
+requires-python = ">=3.14"
+license = "GPL-2.0-only"
+classifiers = [
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Rust",
+]
+
+[tool.maturin]
+manifest-path = "Cargo.toml"

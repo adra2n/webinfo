@@ -1,0 +1,100 @@
+name: Docker Images
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag used for image tags
+        required: false
+        default: v0.5.0-rc1
+      push:
+        description: Push images to GHCR
+        required: false
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      release_tag:
+        required: false
+        type: string
+        default: v0.5.0-rc1
+      push:
+        required: false
+        type: boolean
+        default: false
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || 'v0.5.0-rc1' }}
+
+jobs:
+  build:
+    name: Build Linux x64 image (${{ matrix.stack }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - threaded
+          - async
+          - native-rust
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compute image tag
+        id: image
+        run: |
+          image_repo="ghcr.io/${GITHUB_REPOSITORY,,}"
+          image_tag="${image_repo}:${RELEASE_TAG}-${{ matrix.stack }}"
+          echo "repo=${image_repo}" >> "$GITHUB_OUTPUT"
+          echo "tag=${image_tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image
+        run: |
+          docker compose -f - build dirsearch <<'YAML'
+          services:
+            dirsearch:
+              image: ${{ steps.image.outputs.tag }}
+              build:
+                context: .
+                dockerfile: Dockerfile
+                network: host
+                args:
+                  DIRSEARCH_STACK: ${{ matrix.stack }}
+          YAML
+
+      - name: Test Docker image
+        run: |
+          docker run --rm "${{ steps.image.outputs.tag }}" --version
+          docker run --rm "${{ steps.image.outputs.tag }}" --help
+          docker run --rm \
+            -v "$PWD/tests/static/wordlist.txt:/tmp/wordlist.txt:ro" \
+            "${{ steps.image.outputs.tag }}" \
+            -u https://example.com -w /tmp/wordlist.txt -e html -q
+
+      - name: Log in to GHCR
+        if: ${{ inputs.push }}
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push Docker image
+        if: ${{ inputs.push }}
+        run: docker push "${{ steps.image.outputs.tag }}"
+
+      - name: Write image metadata
+        run: echo "${{ steps.image.outputs.tag }}" > "container-image-${{ matrix.stack }}.txt"
+
+      - name: Upload image metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: dirsearch-${{ env.RELEASE_TAG }}-container-${{ matrix.stack }}
+          path: container-image-${{ matrix.stack }}.txt
+          retention-days: 30

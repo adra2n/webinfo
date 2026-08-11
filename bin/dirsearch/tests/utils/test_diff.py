@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from lib.utils.diff import DynamicContentParser, generate_matching_regex
+from lib.utils.diff import DynamicContentParser, generate_matching_regex, normalize_dynamic_content
 
 
 class TestDiff(TestCase):
@@ -26,5 +26,19 @@ class TestDiff(TestCase):
         self.assertEqual(generate_matching_regex("add.php", "abc.php"), "^a.*\\.php$", "Matching regex isn't correct")
 
     def test_dynamic_content_parser(self):
-        self.assertEqual(DynamicContentParser("a b c", "a b d")._static_patterns, ["  a", "  b"], "Static patterns are not right")
-        self.assertTrue(DynamicContentParser("a b c", "a b d").compare_to("a b ef"))
+        self.assertEqual(DynamicContentParser("a b c", "a b d")._static_patterns, ["a", "b"], "Static patterns are not right")
+        self.assertTrue(DynamicContentParser("abc.php not found", "def.php not found").compare_to("nothing.php not found"))
+        self.assertTrue(DynamicContentParser("abc.php not found", "def.php not found").compare_to("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.php not found"))
+
+    def test_dynamic_content_parser_normalizes_common_tokens(self):
+        parser = DynamicContentParser(
+            "missing abc token 2026-05-29T10:11:12Z id 550e8400-e29b-41d4-a716-446655440000",
+            "missing def token 2026-05-29T10:12:12Z id 550e8400-e29b-41d4-a716-446655440001",
+        )
+
+        self.assertTrue(
+            parser.compare_to(
+                "missing xyz token 2026-05-29T10:13:12Z id 550e8400-e29b-41d4-a716-446655440002"
+            )
+        )
+        self.assertIn("__DYNAMIC__", normalize_dynamic_content("trace=550e8400-e29b-41d4-a716-446655440000"))

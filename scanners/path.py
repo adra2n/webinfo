@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from config import config
 from core.context import ScanContext
 from utils.output import log
@@ -15,20 +16,38 @@ def scan(context: ScanContext):
 
     path_out = os.path.join(context.cache_dir, "path.csv")
 
-    cmd = (
-        f"python {config.DIRSEARCH} "
-        f"-l {context.hosts_file} "
-        f"-e {config.PATH_EXTENSIONS} "
-        f"--timeout=3 "
-        f"-x {config.PATH_EXCLUDE_STATUS} "
-        f"-t {config.THREADS} "
-        f"--min-response-size {config.PATH_MIN_RESPONSE} "
-        f"--random-agent "
-        f"-o {path_out} "
-        f"--format=csv"
+    # 使用项目的 venv Python
+    python_exe = "/Users/adrain/Desktop/project/.venv/bin/python"
+    if not os.path.exists(python_exe):
+        python_exe = sys.executable
+    
+    # 修复参数格式
+    cmd = [
+        python_exe, config.DIRSEARCH,
+        "--urls-file", context.hosts_file,
+        "-e", config.PATH_EXTENSIONS,
+        "--timeout=3",
+        f"-x {config.PATH_EXCLUDE_STATUS}",
+        f"-t {config.THREADS}",
+        f"--min-response-size={config.PATH_MIN_RESPONSE}",
+        "--random-agent",
+        "--no-color",
+        "-o", path_out,
+        "-O", "csv"
+    ]
+
+    log.info(f"执行: {' '.join(cmd[:5])}...")
+
+    # 使用 Popen 异步运行，不读取 stdout 避免阻塞
+    proc = subprocess.Popen(
+        cmd,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
-    subprocess.call(cmd, shell=True)
+    # 等待进程完成
+    proc.wait()
 
     # 解析 CSV 结果写入数据库
     if os.path.exists(path_out):

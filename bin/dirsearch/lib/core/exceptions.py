@@ -17,7 +17,11 @@
 #  Author: Mauro Soria
 
 
-class FailedDependenciesInstallation(Exception):
+class CannotConnectException(Exception):
+    pass
+
+
+class FileExistsException(Exception):
     pass
 
 
@@ -42,4 +46,12 @@ class QuitInterrupt(Exception):
 
 
 class UnpicklingError(Exception):
+    pass
+
+
+class WordlistLimitError(Exception):
+    pass
+
+
+class WordlistBackendUnavailableError(Exception):
     pass

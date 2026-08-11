@@ -16,10 +16,12 @@
 #
 #  Author: Mauro Soria
 
+from urllib.parse import urlsplit, urlunsplit
+
 from lib.utils.common import lstrip_once
 
 
-def clean_path(path, keep_queries=False, keep_fragment=False):
+def clean_path(path: str, keep_queries: bool = False, keep_fragment: bool = False) -> str:
     if not keep_fragment:
         path = path.split("#")[0]
     if not keep_queries:
@@ -28,7 +30,7 @@ def clean_path(path, keep_queries=False, keep_fragment=False):
     return path
 
 
-def parse_path(value):
+def parse_path(value: str) -> str:
     try:
         scheme, url = value.split("//", 1)
         if (
@@ -38,5 +40,26 @@ def parse_path(value):
             raise ValueError
 
         return "/".join(url.split("/")[1:])
-    except Exception:
+    except ValueError:
         return lstrip_once(value, "/")
+
+
+def ensure_trailing_path_slash(url: str) -> str:
+    parsed = urlsplit(url)
+    path = parsed.path
+    if not path.endswith("/"):
+        path += "/"
+
+    return urlunsplit(parsed._replace(path=path))
+
+
+def append_query_string(value: str, query: str) -> str:
+    if not query or "?" in value:
+        return value
+
+    path, separator, fragment = value.partition("#")
+    value = f"{path}?{query}"
+    if separator:
+        value += f"#{fragment}"
+
+    return value

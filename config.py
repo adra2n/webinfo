@@ -28,7 +28,7 @@ class Config:
     NAABU_EXCLUDE_CDN = os.getenv("WEBINFO_NAABU_EXCLUDE_CDN", "true")  # 排除 CDN
     NAABU_STREAM = os.getenv("WEBINFO_NAABU_STREAM", "true").lower() == "true"  # 流模式加速
     NAABU_THREADS = int(os.getenv("WEBINFO_NAABU_THREADS", "30"))  # 并发线程数
-    NMAP_EXTRA_ARGS = os.getenv("WEBINFO_NMAP_EXTRA", "-sV -T4 --open --script=banner").split()
+    NMAP_EXTRA_ARGS = os.getenv("WEBINFO_NMAP_EXTRA", "-T4 -Pn --open --script=banner").split()
 
     # CIDR 扩展扫描
     EXPAND_CIDR = os.getenv("WEBINFO_EXPAND_CIDR", "true").lower() == "true"  # 是否扩展到 C 段

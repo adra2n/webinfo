@@ -16,6 +16,8 @@
 #
 #  Author: Mauro Soria
 
+from __future__ import annotations
+
 import os
 import os.path
 
@@ -59,7 +61,7 @@ class File:
 
 class FileUtils:
     @staticmethod
-    def build_path(*path_components):
+    def build_path(*path_components: str) -> str:
         if path_components:
             path = os.path.join(*path_components)
         else:
@@ -76,18 +78,23 @@ class FileUtils:
         return os.access(file_name, os.F_OK)
 
     @staticmethod
+    def is_empty(file_name):
+        return os.stat(file_name).st_size == 0
+
+    @staticmethod
     def can_read(file_name):
         try:
             with open(file_name):
                 pass
-        except IOError:
+        except OSError:
             return False
+
         return True
 
-    @staticmethod
-    def can_write(path):
-        while not FileUtils.is_dir(path):
-            path = FileUtils.parent(path)
+    @classmethod
+    def can_write(cls, path):
+        while not cls.exists(path):
+            path = cls.parent(path)
 
         return os.access(path, os.W_OK)
 
@@ -96,16 +103,25 @@ class FileUtils:
         return open(file_name, "r").read()
 
     @staticmethod
-    def read_dir(directory):
-        data = {}
-        for root, _, files in os.walk(directory):
-            for file in files:
-                data[file] = FileUtils.read(os.path.join(root, file))
+    def read_bytes(file_name):
+        with open(file_name, "rb") as fd:
+            return fd.read()
 
-        return data
+    @classmethod
+    def get_files(cls, directory):
+        files = []
+
+        for path in os.listdir(directory):
+            path = os.path.join(directory, path)
+            if cls.is_dir(path):
+                files.extend(cls.get_files(path))
+            else:
+                files.append(path)
+
+        return files
 
     @staticmethod
-    def get_lines(file_name):
+    def get_lines(file_name: str) -> list[str]:
         with open(file_name, "r", errors="replace") as fd:
             return fd.read().splitlines()
 
@@ -124,14 +140,10 @@ class FileUtils:
 
         return path
 
-    @staticmethod
-    def create_dir(directory):
-        if not FileUtils.exists(directory):
-            os.makedirs(directory)
-
-    @staticmethod
-    def create_file(file):
-        open(file, "w").close()
+    @classmethod
+    def create_dir(cls, directory):
+        if not cls.exists(directory):
+            os.makedirs(directory, exist_ok=True)
 
     @staticmethod
     def write_lines(file_name, lines, overwrite=False):

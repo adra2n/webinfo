@@ -16,25 +16,97 @@
 #
 #  Author: Mauro Soria
 
+from __future__ import annotations
+
+from typing import Any
+
+import time
+import httpx
+import requests
+
 from lib.core.settings import (
-    DEFAULT_ENCODING, ITER_CHUNK_SIZE,
-    MAX_RESPONSE_SIZE, UNKNOWN,
+    DEFAULT_ENCODING,
+    ITER_CHUNK_SIZE,
+    MAX_RESPONSE_SIZE,
+    UNKNOWN,
 )
 from lib.parse.url import clean_path, parse_path
-from lib.utils.common import is_binary
+from lib.utils.common import get_readable_size, is_binary, replace_path
 
 
-class Response:
-    def __init__(self, response):
-        self.url = response.url
-        self.full_path = parse_path(response.url)
+class BaseResponse:
+    def __init__(self, url, response: requests.Response | httpx.Response, elapsed: float = 0.0) -> None:
+        self.datetime = time.strftime("%Y-%m-%d %H:%M:%S")
+        self.url = url
+        self.full_path = parse_path(self.url)
         self.path = clean_path(self.full_path)
         self.status = response.status_code
         self.headers = response.headers
-        self.redirect = self.headers.get("location") or ""
-        self.history = [res.url for res in response.history]
+        self.redirect = self.headers.get("location", "")
+        self.history = [str(res.url) for res in response.history]
+        self.elapsed = elapsed
         self.content = ""
         self.body = b""
+
+    @property
+    def type(self) -> str:
+        if ct := self.headers.get("content-type"):
+            return ct.split(";")[0]
+
+        return UNKNOWN
+
+    @property
+    def length(self) -> int:
+        if cl := self.headers.get("content-length"):
+            try:
+                length = int(cl)
+            except (TypeError, ValueError):
+                return len(self.body)
+
+            if length >= 0:
+                return length
+
+        return len(self.body)
+
+    @property
+    def size(self) -> str:
+        return get_readable_size(self.length)
+
+    @property
+    def text(self) -> str:
+        if self.content:
+            return self.content
+
+        return self.body.decode(DEFAULT_ENCODING, errors="ignore")
+
+    @property
+    def words(self) -> int:
+        return len(self.text.split())
+
+    @property
+    def lines(self) -> int:
+        if not self.text:
+            return 0
+
+        return self.text.count("\n") + 1
+
+    def __hash__(self) -> int:
+        # Hash the static parts of the response only.
+        # See https://github.com/maurosoria/dirsearch/pull/1436#issuecomment-2476390956
+        body = replace_path(self.content, self.full_path.split("#")[0], "") if self.content else self.body
+        return hash((self.status, body))
+
+    def __eq__(self, other: Any) -> bool:
+        return (self.status, self.body, self.redirect) == (
+            other.status,
+            other.body,
+            other.redirect,
+        )
+
+
+class Response(BaseResponse):
+    def __init__(self, url, response: requests.Response, elapsed: float = 0.0) -> None:
+        super().__init__(url, response, elapsed)
 
         for chunk in response.iter_content(chunk_size=ITER_CHUNK_SIZE):
             self.body += chunk
@@ -45,30 +117,71 @@ class Response:
                 break
 
         if not is_binary(self.body):
-            self.content = self.body.decode(
-                response.encoding or DEFAULT_ENCODING, errors="ignore"
-            )
+            try:
+                self.content = self.body.decode(
+                    response.encoding or DEFAULT_ENCODING, errors="replace"
+                )
+            except LookupError:
+                self.content = self.body.decode(DEFAULT_ENCODING, errors="replace")
+
+
+class AsyncResponse(BaseResponse):
+    @classmethod
+    async def create(cls, url, response: httpx.Response, elapsed: float = 0.0) -> AsyncResponse:
+        self = cls(url, response, elapsed)
+        async for chunk in response.aiter_bytes(chunk_size=ITER_CHUNK_SIZE):
+            self.body += chunk
+
+            if len(self.body) >= MAX_RESPONSE_SIZE or (
+                "content-length" in self.headers and is_binary(self.body)
+            ):
+                break
+
+        if not is_binary(self.body):
+            try:
+                self.content = self.body.decode(
+                    response.encoding or DEFAULT_ENCODING, errors="replace"
+                )
+            except LookupError:
+                self.content = self.body.decode(DEFAULT_ENCODING, errors="replace")
+
+        return self
+
+
+class NativeResponse(BaseResponse):
+    def __init__(
+        self,
+        url: str,
+        status: int,
+        headers: list[tuple[str, str]],
+        body: bytes | bytearray | list[int],
+        elapsed: float = 0.0,
+        length: int | None = None,
+        filtered: bool = False,
+        filter_reason: str | None = None,
+    ) -> None:
+        response = type(
+            "NativeHTTPResponse",
+            (),
+            {
+                "status_code": status,
+                "headers": {key.lower(): value for key, value in headers},
+                "history": [],
+                "encoding": None,
+            },
+        )()
+        super().__init__(url, response, elapsed)
+
+        self._length = length
+        self.filtered = filtered
+        self.filter_reason = filter_reason
+        self.body = bytes(body)
+        if not is_binary(self.body):
+            self.content = self.body.decode(DEFAULT_ENCODING, errors="replace")
 
     @property
-    def type(self):
-        if "content-type" in self.headers:
-            return self.headers.get("content-type").split(";")[0]
+    def length(self) -> int:
+        if self._length is not None:
+            return self._length
 
-        return UNKNOWN
-
-    @property
-    def length(self):
-        try:
-            return int(self.headers.get("content-length"))
-        except TypeError:
-            return len(self.body)
-
-    def __hash__(self):
-        return hash(self.body)
-
-    def __eq__(self, other):
-        return (self.status, self.body, self.redirect) == (
-            other.status,
-            other.body,
-            other.redirect,
-        )
+        return super().length
