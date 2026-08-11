@@ -53,20 +53,26 @@ def _expand_cidr_to_ips(cidr_file: str, output_file: str) -> int:
                 line = line.strip()
                 if line:
                     cidrs.append(line)
+    
+    log.info(f"读取到 {len(cidrs)} 个 CIDR: {cidrs[:5]}...")
 
     ips = set()
     for cidr in cidrs:
         try:
             network = IP(cidr)
+            ip_count = len(list(network))
+            log.info(f"CIDR {cidr} 展开为 {ip_count} 个 IP")
             for ip in network:
                 ips.add(str(ip))
-        except Exception:
+        except Exception as e:
+            log.warning(f"CIDR {cidr} 解析失败: {e}")
             continue
 
     with open(output_file, "w") as f:
         for ip in sorted(ips):
             f.write(ip + "\n")
 
+    log.info(f"总共展开 {len(ips)} 个唯一 IP，写入 {output_file}")
     return len(ips)
 
 
@@ -356,9 +362,22 @@ def scan(context: ScanContext):
     if config.EXPAND_CIDR:
         cidr_file = os.path.join(context.cache_dir, "cidr.txt")
         cidr_ips_file = os.path.join(context.cache_dir, "cidr_ips.txt")
+        
+        # 检查 CIDR 文件
+        if not os.path.exists(cidr_file):
+            log.warning(f"CIDR 文件不存在: {cidr_file}")
+        else:
+            with open(cidr_file) as f:
+                cidr_content = f.read().strip()
+                if not cidr_content:
+                    log.warning("CIDR 文件为空")
+                else:
+                    log.info(f"CIDR 文件内容: {cidr_content[:200]}...")
+        
         cidr_count = _expand_cidr_to_ips(cidr_file, cidr_ips_file)
+        log.info(f"CIDR 展开结果: {cidr_count} 个 IP")
+        
         if cidr_count > 0:
-            log.info(f"CIDR 展开为 {cidr_count} 个 IP")
             cidr_discovered = _run_naabu_with_progress(context, cidr_ips_file, config.CIDR_PORTS, config.CIDR_RATE, "CIDR扩展")
             log.info(f"CIDR 扩展发现 {len(cidr_discovered)} 个开放端口")
             discovered.extend(cidr_discovered)
